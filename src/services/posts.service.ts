@@ -44,7 +44,7 @@ export async function createPost(data: CreatePostData, userId: string, userName:
     description: data.description,
     category: data.category,
     location: data.location,
-    status: 'approved', // Will be set by AI validation
+    status: 'pending', // AI will automatically approve valid posts
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     images: data.images || [],

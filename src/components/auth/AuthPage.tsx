@@ -12,11 +12,17 @@ import logo from 'figma:asset/e0850b95def2b76d7623aebb6fd341e7597812e1.png';
 
 interface AuthPageProps {
   onLogin: (user: any) => void;
+  onBack?: () => void;
 }
 
-export function AuthPage({ onLogin }: AuthPageProps) {
+export function AuthPage({ onLogin, onBack }: AuthPageProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{
+    password?: string;
+    confirmPassword?: string;
+  }>({});
 
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
@@ -34,14 +40,69 @@ export function AuthPage({ onLogin }: AuthPageProps) {
     zipCode: ''
   });
 
+  // Real-time validation for signup
+  const validatePassword = (password: string) => {
+    if (!password) return '';
+    if (password.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+    return '';
+  };
+
+  const validateConfirmPassword = (confirmPassword: string, password: string) => {
+    if (!confirmPassword) return '';
+    if (confirmPassword !== password) {
+      return 'Passwords do not match';
+    }
+    return '';
+  };
+
+  // Update validation errors when password fields change
+  const handlePasswordChange = (password: string) => {
+    setSignupData({ ...signupData, password });
+    const passwordError = validatePassword(password);
+    const confirmError = signupData.confirmPassword 
+      ? validateConfirmPassword(signupData.confirmPassword, password)
+      : '';
+    setValidationErrors({ password: passwordError, confirmPassword: confirmError });
+  };
+
+  const handleConfirmPasswordChange = (confirmPassword: string) => {
+    setSignupData({ ...signupData, confirmPassword });
+    const confirmError = validateConfirmPassword(confirmPassword, signupData.password);
+    setValidationErrors({ ...validationErrors, confirmPassword: confirmError });
+  };
+
+  // Check if signup form is valid
+  const isSignupValid = () => {
+    return (
+      signupData.name &&
+      signupData.email &&
+      signupData.password.length >= 6 &&
+      signupData.password === signupData.confirmPassword &&
+      signupData.address &&
+      signupData.city &&
+      signupData.state &&
+      signupData.zipCode &&
+      !validationErrors.password &&
+      !validationErrors.confirmPassword
+    );
+  };
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
     // Check for admin credentials
     if (loginEmail === 'civilink1357@gmail.com' && loginPassword === 'AryanVrinda1') {
       const adminUser = mockUsers.find(u => u.email === loginEmail);
-      toast.success('Welcome back, Admin!');
-      onLogin(adminUser);
+      if (adminUser) {
+        toast.success('Welcome back, Admin!');
+        setTimeout(() => {
+          setIsLoading(false);
+          onLogin(adminUser);
+        }, 300);
+      }
       return;
     }
 
@@ -49,28 +110,36 @@ export function AuthPage({ onLogin }: AuthPageProps) {
     const user = mockUsers.find(u => u.email === loginEmail && u.password === loginPassword);
     if (user) {
       toast.success(`Welcome back, ${user.name}!`);
-      onLogin(user);
+      setTimeout(() => {
+        setIsLoading(false);
+        onLogin(user);
+      }, 300);
     } else {
+      setIsLoading(false);
       toast.error('Invalid email or password');
     }
   };
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     // Validation
     if (signupData.password !== signupData.confirmPassword) {
+      setIsLoading(false);
       toast.error('Passwords do not match');
       return;
     }
 
     if (signupData.password.length < 6) {
+      setIsLoading(false);
       toast.error('Password must be at least 6 characters');
       return;
     }
 
     // Check if email already exists
     if (mockUsers.find(u => u.email === signupData.email)) {
+      setIsLoading(false);
       toast.error('Email already registered');
       return;
     }
@@ -81,7 +150,7 @@ export function AuthPage({ onLogin }: AuthPageProps) {
       email: signupData.email,
       password: signupData.password,
       name: signupData.name,
-      role: 'user',
+      role: 'user' as const,
       city: signupData.city,
       state: signupData.state,
       address: signupData.address,
@@ -92,7 +161,10 @@ export function AuthPage({ onLogin }: AuthPageProps) {
 
     mockUsers.push(newUser);
     toast.success('Account created successfully!');
-    onLogin(newUser);
+    setTimeout(() => {
+      setIsLoading(false);
+      onLogin(newUser);
+    }, 300);
   };
 
   const benefits = [
@@ -104,6 +176,21 @@ export function AuthPage({ onLogin }: AuthPageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 overflow-hidden relative">
+      {/* Back Button */}
+      {onBack && (
+        <div className="absolute top-6 left-6 z-20">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+        </div>
+      )}
+      
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -161,11 +248,7 @@ export function AuthPage({ onLogin }: AuthPageProps) {
               </div>
 
               <div>
-                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-6">
-                  <Sparkles className="h-4 w-4" />
-                  <span className="text-sm">Join the Movement</span>
-                </div>
-                
+                {/* "Join the Movement" badge removed for better visual hierarchy */}
                 <h1 className="text-5xl mb-4">
                   Welcome to
                   <br />
@@ -271,8 +354,9 @@ export function AuthPage({ onLogin }: AuthPageProps) {
                           type="submit" 
                           className="w-full h-11 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90"
                           size="lg"
+                          disabled={isLoading}
                         >
-                          Sign In
+                          {isLoading ? 'Signing In...' : 'Sign In'}
                         </Button>
                       </form>
                     </TabsContent>
@@ -310,7 +394,7 @@ export function AuthPage({ onLogin }: AuthPageProps) {
                               type={showPassword ? 'text' : 'password'}
                               placeholder="Create a password"
                               value={signupData.password}
-                              onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                              onChange={(e) => handlePasswordChange(e.target.value)}
                               required
                               className="h-11 pr-10"
                             />
@@ -322,6 +406,11 @@ export function AuthPage({ onLogin }: AuthPageProps) {
                               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </button>
                           </div>
+                          {validationErrors.password && (
+                            <p className="text-red-500 text-sm mt-1">
+                              {validationErrors.password}
+                            </p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="confirm-password">Confirm Password</Label>
@@ -331,7 +420,7 @@ export function AuthPage({ onLogin }: AuthPageProps) {
                               type={showConfirmPassword ? 'text' : 'password'}
                               placeholder="Confirm your password"
                               value={signupData.confirmPassword}
-                              onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
+                              onChange={(e) => handleConfirmPasswordChange(e.target.value)}
                               required
                               className="h-11 pr-10"
                             />
@@ -343,6 +432,11 @@ export function AuthPage({ onLogin }: AuthPageProps) {
                               {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </button>
                           </div>
+                          {validationErrors.confirmPassword && (
+                            <p className="text-red-500 text-sm mt-1">
+                              {validationErrors.confirmPassword}
+                            </p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="address">Address</Label>
@@ -394,8 +488,9 @@ export function AuthPage({ onLogin }: AuthPageProps) {
                           type="submit" 
                           className="w-full h-11 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90"
                           size="lg"
+                          disabled={isLoading || !isSignupValid()}
                         >
-                          Create Account
+                          {isLoading ? 'Creating Account...' : 'Create Account'}
                         </Button>
                       </form>
                     </TabsContent>

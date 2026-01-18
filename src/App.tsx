@@ -7,9 +7,11 @@ import { CityGovDashboard } from './components/city-gov/CityGovDashboard';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { PostsPage } from './components/posts/PostsPage';
 import { CreatePostPage } from './components/posts/CreatePostPage';
+import { PostDetailPage } from './components/posts/PostDetailPage';
 import { NotificationsPage } from './components/notifications/NotificationsPage';
 import { LeadersPage } from './components/leaders/LeadersPage';
 import { ProfilePage } from './components/profile/ProfilePage';
+import { UserProfilePage } from './components/profile/UserProfilePage';
 import { SearchPage } from './components/search/SearchPage';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { Toaster } from './components/ui/sonner';
@@ -173,7 +175,10 @@ export default function App() {
               isAuthenticated ? (
                 <Navigate to={currentUser?.role === 'admin' ? '/admin' : '/dashboard'} replace />
               ) : (
-                <AuthPage onLogin={handleLogin} />
+                <AuthPage 
+                  onLogin={handleLogin}
+                  onBack={() => setShowLanding(true)}
+                />
               )
             } 
           />
@@ -208,6 +213,16 @@ export default function App() {
             }
           />
           <Route
+            path="/posts/:postId"
+            element={
+              isAuthenticated ? (
+                <PostDetailPage currentUser={currentUser} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/auth/login" replace />
+              )
+            }
+          />
+          <Route
             path="/notifications"
             element={
               isAuthenticated ? (
@@ -232,6 +247,16 @@ export default function App() {
             element={
               isAuthenticated ? (
                 <ProfilePage currentUser={currentUser} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/auth/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/users/:userId"
+            element={
+              isAuthenticated ? (
+                <UserProfilePage currentUser={currentUser} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/auth/login" replace />
               )

@@ -14,7 +14,7 @@
  * TODO: Replace with your backend API URL
  * Example: 'https://api.civilink.com/v1'
  */
-export const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
+export const API_BASE_URL = 'http://localhost:3001/api';
 
 /**
  * AI Service API endpoint
@@ -70,16 +70,25 @@ export const POST_CATEGORIES = [
   'Public Safety',
   'Education',
   'Health',
+  'Other',
 ] as const;
 
 /**
  * Post statuses with display configuration
+ * Status flow: Pending Review → Under Review → In Progress → Completed
+ * AI automatically approves posts - city officials move from Under Review to In Progress
+ * Can be rejected or closed at any stage
  */
 export const POST_STATUSES = [
-  { value: 'under-review', label: 'Under Review', color: 'text-blue-600 bg-blue-50' },
-  { value: 'approved', label: 'Approved', color: 'text-green-600 bg-green-50' },
-  { value: 'rejected', label: 'Rejected', color: 'text-red-600 bg-red-50' },
+  { value: 'pending', label: 'Pending Review', color: 'text-yellow-600 bg-yellow-50', description: 'Awaiting city review' },
+  { value: 'under_review', label: 'Under Review', color: 'text-blue-600 bg-blue-50', description: 'Being reviewed by city officials' },
+  { value: 'in_progress', label: 'In Progress', color: 'text-purple-600 bg-purple-50', description: 'City is actively working on this' },
+  { value: 'completed', label: 'Completed', color: 'text-emerald-600 bg-emerald-50', description: 'Issue has been resolved' },
+  { value: 'rejected', label: 'Rejected', color: 'text-red-600 bg-red-50', description: 'Not a valid issue or duplicate' },
+  { value: 'closed', label: 'Closed', color: 'text-gray-600 bg-gray-50', description: 'Resolved or no action needed' },
 ] as const;
+
+export type PostStatus = typeof POST_STATUSES[number]['value'];
 
 /**
  * Endorsement threshold to send post to officials

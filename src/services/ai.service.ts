@@ -1,233 +1,292 @@
 /**
- * AI Service
+ * AI Service - Groq AI Integration
  * 
- * Handles AI-powered content validation and moderation.
- * GitHub Copilot: This should call your BACKEND AI endpoint, NOT directly call AI APIs.
+ * This service handles all AI-powered features in CiviLink.
+ * All requests go through Supabase Edge Functions to keep API keys secure.
  * 
- * SECURITY WARNING: Never put AI API keys in frontend code!
- * All AI calls must go through your backend to keep API keys secure.
+ * Backend Setup Required:
+ * 1. Create Supabase project at https://supabase.com
+ * 2. Set GROQ_API_KEY in Supabase secrets
+ * 3. Deploy Edge Functions (see /supabase/functions/ folder)
+ * 4. Update SUPABASE_URL and SUPABASE_ANON_KEY in .env
  */
 
-import api from './api.service';
-import type {
-  AIValidationRequest,
-  AIValidationResponse,
-  AIContentModerationRequest,
-  AIContentModerationResponse,
-  APIResponse,
-} from '../types';
-import { AI_CONFIDENCE_THRESHOLD } from '../config/constants';
-
-// ============================================================================
-// AI VALIDATION FUNCTIONS
-// ============================================================================
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 /**
- * Validate a post using AI to detect spam and categorize content
+ * Post Verification AI
+ * Analyzes post content to ensure it's appropriate and civic-related
  * 
- * TODO: Replace with actual backend API call
- * Backend endpoint: POST /ai/validate-post
+ * Backend: POST /functions/v1/verify-post
+ * Groq Model: llama-3.3-70b-versatile (fast and accurate)
  * 
- * Your backend should:
- * 1. Receive the post data
- * 2. Call your AI API (OpenAI, Claude, etc.) with your API key
- * 3. Parse the AI response
- * 4. Return the validation result
- * 
- * Example backend implementation (Node.js):
- * ```
- * app.post('/ai/validate-post', async (req, res) => {
- *   const { title, description, category } = req.body;
- *   
- *   const prompt = `Analyze this civic issue report:
- *   Title: ${title}
- *   Description: ${description}
- *   Category: ${category}
- *   
- *   Is this a legitimate civic issue or spam? Provide confidence score.`;
- *   
- *   const aiResponse = await openai.chat.completions.create({
- *     model: 'gpt-4',
- *     messages: [{ role: 'user', content: prompt }],
- *   });
- *   
- *   // Parse AI response and return
- *   res.json(validationResult);
- * });
- * ```
+ * Prompt Example:
+ * "Analyze this civic issue report. Check if it's:
+ *  1. Appropriate (no spam, harassment, or inappropriate content)
+ *  2. Civic-related (genuine community issue)
+ *  3. Category suggestion
+ *  Return JSON: { isValid: boolean, reason: string, suggestedCategory: string, confidence: number }"
  */
-export async function validatePost(data: AIValidationRequest): Promise<APIResponse<AIValidationResponse>> {
-  // TODO: Replace this mock implementation with actual backend API call
-  // Example implementation:
-  // return api.post<AIValidationResponse>('/ai/validate-post', data);
-  
-  // MOCK IMPLEMENTATION - Remove when backend is ready
-  // This simulates AI validation logic
-  const spamKeywords = ['free money', 'click here', 'buy now', 'limited time'];
-  const hasSpam = spamKeywords.some(keyword => 
-    data.title.toLowerCase().includes(keyword) || 
-    data.description.toLowerCase().includes(keyword)
-  );
+export async function verifyPostWithAI(postData: {
+  title: string;
+  description: string;
+  category?: string;
+  location?: string;
+}) {
+  try {
+    // TODO: Uncomment when Supabase Edge Function is deployed
+    // const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-post`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    //   },
+    //   body: JSON.stringify(postData)
+    // });
+    // 
+    // if (!response.ok) throw new Error('AI verification failed');
+    // return await response.json();
 
-  // Simulate AI confidence score (0-1)
-  const confidence = hasSpam ? 0.3 : 0.9;
-  const isValid = confidence >= AI_CONFIDENCE_THRESHOLD;
-
-  // Determine status based on AI confidence
-  let suggestedStatus: 'under-review' | 'approved' | 'rejected';
-  if (confidence >= AI_CONFIDENCE_THRESHOLD) {
-    suggestedStatus = 'approved';
-  } else if (confidence >= 0.5) {
-    suggestedStatus = 'under-review';
-  } else {
-    suggestedStatus = 'rejected';
+    // Mock response for development
+    console.log('AI Verification called for:', postData.title);
+    return {
+      isValid: true,
+      reason: 'Post appears to be a legitimate civic issue',
+      suggestedCategory: postData.category || 'Infrastructure',
+      confidence: 0.95
+    };
+  } catch (error) {
+    console.error('AI verification error:', error);
+    throw error;
   }
-
-  // Simulate priority detection
-  const urgencyWords = ['urgent', 'emergency', 'dangerous', 'immediate'];
-  const hasUrgency = urgencyWords.some(word =>
-    data.title.toLowerCase().includes(word) ||
-    data.description.toLowerCase().includes(word)
-  );
-
-  return {
-    success: true,
-    data: {
-      isValid,
-      confidence,
-      suggestedStatus,
-      reasoning: isValid
-        ? 'Content appears to be a legitimate civic issue report.'
-        : 'Content may contain spam or inappropriate content. Manual review recommended.',
-      suggestedCategory: data.category,
-      suggestedPriority: hasUrgency ? 'high' : 'medium',
-    },
-  };
 }
 
 /**
- * Moderate content (posts, comments) using AI
+ * Trend Forecasting AI
+ * Predicts future issue volumes based on historical data
  * 
- * TODO: Replace with actual backend API call
- * Backend endpoint: POST /ai/moderate-content
+ * Backend: POST /functions/v1/forecast-trends
+ * Groq Model: llama-3.3-70b-versatile
  * 
- * Your backend should check for:
- * - Profanity
- * - Hate speech
- * - Spam
- * - Inappropriate content
+ * Prompt Example:
+ * "Based on these historical civic issues, predict next week's volume per category.
+ *  Historical data: [category counts, dates, seasonal patterns]
+ *  Return JSON array: [{ category, currentWeek, nextWeek, confidence, reason }]"
  */
-export async function moderateContent(data: AIContentModerationRequest): Promise<APIResponse<AIContentModerationResponse>> {
-  // TODO: Replace this mock implementation with actual backend API call
-  // return api.post<AIContentModerationResponse>('/ai/moderate-content', data);
-  
-  // MOCK IMPLEMENTATION - Remove when backend is ready
-  const inappropriateWords = ['spam', 'scam', 'offensive'];
-  const flags: string[] = [];
-  let severity: 'low' | 'medium' | 'high' = 'low';
+export async function getTrendForecast(historicalData: {
+  cityName: string;
+  posts: any[];
+  dateRange: { start: string; end: string };
+}) {
+  try {
+    // TODO: Uncomment when Supabase Edge Function is deployed
+    // const response = await fetch(`${SUPABASE_URL}/functions/v1/forecast-trends`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    //   },
+    //   body: JSON.stringify(historicalData)
+    // });
+    // 
+    // if (!response.ok) throw new Error('Trend forecast failed');
+    // return await response.json();
 
-  inappropriateWords.forEach(word => {
-    if (data.content.toLowerCase().includes(word)) {
-      flags.push(word);
-      severity = 'medium';
-    }
-  });
-
-  const isAppropriate = flags.length === 0;
-  const suggestedAction = isAppropriate ? 'approve' : flags.length > 2 ? 'reject' : 'review';
-
-  return {
-    success: true,
-    data: {
-      isAppropriate,
-      flags,
-      severity,
-      suggestedAction,
-    },
-  };
-}
-
-/**
- * Generate AI suggestions for improving a post
- * 
- * TODO: Implement backend API call
- * Backend endpoint: POST /ai/suggest-improvements
- */
-export async function suggestPostImprovements(
-  title: string,
-  description: string
-): Promise<APIResponse<{ suggestions: string[] }>> {
-  // TODO: Implement with backend API
-  // return api.post('/ai/suggest-improvements', { title, description });
-  
-  // MOCK IMPLEMENTATION
-  const suggestions = [
-    'Add specific location details for faster response',
-    'Include photos if possible to help officials assess the issue',
-    'Mention if this is a recurring problem',
-  ];
-
-  return {
-    success: true,
-    data: { suggestions },
-  };
-}
-
-/**
- * Auto-categorize a post based on its content
- * 
- * TODO: Implement backend API call
- * Backend endpoint: POST /ai/categorize
- */
-export async function categorizePost(
-  title: string,
-  description: string
-): Promise<APIResponse<{ category: string; confidence: number }>> {
-  // TODO: Implement with backend API
-  // return api.post('/ai/categorize', { title, description });
-  
-  // MOCK IMPLEMENTATION
-  const categories = ['Infrastructure', 'Transportation', 'Parks', 'Public Safety', 'Education', 'Health'];
-  
-  // Simple keyword-based categorization
-  const content = (title + ' ' + description).toLowerCase();
-  let category = 'Infrastructure';
-  
-  if (content.includes('road') || content.includes('traffic') || content.includes('bus')) {
-    category = 'Transportation';
-  } else if (content.includes('park') || content.includes('tree') || content.includes('garden')) {
-    category = 'Parks';
-  } else if (content.includes('police') || content.includes('safety') || content.includes('crime')) {
-    category = 'Public Safety';
-  } else if (content.includes('school') || content.includes('education')) {
-    category = 'Education';
-  } else if (content.includes('health') || content.includes('hospital') || content.includes('medical')) {
-    category = 'Health';
+    // Mock response for development
+    console.log('Trend Forecast called for:', historicalData.cityName);
+    return {
+      trends: [
+        {
+          category: 'Infrastructure',
+          currentWeek: 12,
+          nextWeek: 18,
+          confidence: 85,
+          reason: 'Winter weather patterns indicate increased pothole reports'
+        }
+      ]
+    };
+  } catch (error) {
+    console.error('Trend forecast error:', error);
+    throw error;
   }
-
-  return {
-    success: true,
-    data: {
-      category,
-      confidence: 0.85,
-    },
-  };
-}
-
-// ============================================================================
-// AI HELPER FUNCTIONS
-// ============================================================================
-
-/**
- * Check if AI validation should auto-approve a post
- */
-export function shouldAutoApprove(validationResult: AIValidationResponse): boolean {
-  return validationResult.confidence >= AI_CONFIDENCE_THRESHOLD && validationResult.isValid;
 }
 
 /**
- * Check if AI moderation requires manual review
+ * Budget Impact Analysis AI
+ * Estimates costs and timelines for addressing issues
+ * 
+ * Backend: POST /functions/v1/analyze-budget
+ * Groq Model: llama-3.3-70b-versatile
+ * 
+ * Prompt Example:
+ * "Analyze these civic issues and estimate resolution costs.
+ *  Issues: [category, endorsements, complexity]
+ *  Return JSON: { totalCost, breakdown: [{ category, cost, issues }], timeframe }"
  */
-export function requiresManualReview(moderationResult: AIContentModerationResponse): boolean {
-  return moderationResult.suggestedAction === 'review' || moderationResult.severity === 'high';
+export async function analyzeBudgetImpact(issueData: {
+  cityName: string;
+  issues: any[];
+  highPriorityCount: number;
+}) {
+  try {
+    // TODO: Uncomment when Supabase Edge Function is deployed
+    // const response = await fetch(`${SUPABASE_URL}/functions/v1/analyze-budget`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    //   },
+    //   body: JSON.stringify(issueData)
+    // });
+    // 
+    // if (!response.ok) throw new Error('Budget analysis failed');
+    // return await response.json();
+
+    // Mock response for development
+    console.log('Budget Analysis called for:', issueData.cityName);
+    return {
+      totalCost: '$284,500',
+      averageCostPerIssue: '$3,200',
+      estimatedTimeframe: '6-8 weeks',
+      breakdown: [
+        { category: 'Infrastructure', cost: '$125,000', issues: 5 }
+      ]
+    };
+  } catch (error) {
+    console.error('Budget analysis error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Completion Time Prediction AI
+ * Predicts how long an issue will take to resolve
+ * 
+ * Backend: POST /functions/v1/predict-completion
+ * Groq Model: llama-3.3-70b-versatile
+ * 
+ * Prompt Example:
+ * "Based on this issue and historical data, predict completion time.
+ *  Issue: { category, status, endorsements, complexity }
+ *  Historical: [similar issues with completion times]
+ *  Return JSON: { estimatedDays, confidence, factors: [{ label, value }] }"
+ */
+export async function predictCompletionTime(issueData: {
+  postId: string;
+  category: string;
+  status: string;
+  endorsements: number;
+  historicalData: any[];
+}) {
+  try {
+    // TODO: Uncomment when Supabase Edge Function is deployed
+    // const response = await fetch(`${SUPABASE_URL}/functions/v1/predict-completion`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    //   },
+    //   body: JSON.stringify(issueData)
+    // });
+    // 
+    // if (!response.ok) throw new Error('Completion prediction failed');
+    // return await response.json();
+
+    // Mock response for development
+    console.log('Completion Prediction called for issue:', issueData.postId);
+    return {
+      estimatedDays: 12,
+      confidence: 85,
+      factors: [
+        { label: 'Similar issues avg', value: '10-14 days' },
+        { label: 'Current workload', value: 'Moderate' }
+      ]
+    };
+  } catch (error) {
+    console.error('Completion prediction error:', error);
+    throw error;
+  }
+}
+
+/**
+ * AI Report Generation
+ * Generates comprehensive weekly reports
+ * 
+ * Backend: POST /functions/v1/generate-report
+ * Groq Model: llama-3.3-70b-versatile
+ * 
+ * Prompt Example:
+ * "Generate a comprehensive civic issues report.
+ *  Data: [all issues, trends, budget analysis]
+ *  Return JSON with executive summary, key insights, recommendations"
+ */
+export async function generateAIReport(reportData: {
+  cityName: string;
+  dateRange: { start: string; end: string };
+  posts: any[];
+  includeForecasts: boolean;
+}) {
+  try {
+    // TODO: Uncomment when Supabase Edge Function is deployed
+    // const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-report`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    //   },
+    //   body: JSON.stringify(reportData)
+    // });
+    // 
+    // if (!response.ok) throw new Error('Report generation failed');
+    // return await response.json();
+
+    // Mock response for development
+    console.log('AI Report Generation called for:', reportData.cityName);
+    return {
+      success: true,
+      message: 'Report generated successfully'
+    };
+  } catch (error) {
+    console.error('Report generation error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Smart Categorization AI
+ * Suggests the best category for a post based on content
+ * 
+ * Backend: POST /functions/v1/categorize-post
+ * Groq Model: llama-3.3-70b-versatile
+ */
+export async function categorizePo(postContent: {
+  title: string;
+  description: string;
+}) {
+  try {
+    // TODO: Uncomment when Supabase Edge Function is deployed
+    // const response = await fetch(`${SUPABASE_URL}/functions/v1/categorize-post`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    //   },
+    //   body: JSON.stringify(postContent)
+    // });
+    // 
+    // if (!response.ok) throw new Error('Categorization failed');
+    // return await response.json();
+
+    // Mock response for development
+    console.log('Smart Categorization called');
+    return {
+      suggestedCategory: 'Infrastructure',
+      confidence: 0.92,
+      alternatives: ['Transportation', 'Safety']
+    };
+  } catch (error) {
+    console.error('Categorization error:', error);
+    throw error;
+  }
 }

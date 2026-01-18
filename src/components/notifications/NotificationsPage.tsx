@@ -1,4 +1,9 @@
+import { useState } from 'react';
 import { Bell, ThumbsUp, MessageSquare, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { AppLayout } from '../layout/AppLayout';
+import { Button } from '../ui/button';
+import { Card, CardContent } from '../ui/card';
+import { Badge } from '../ui/badge';
 import { mockNotifications } from '../../lib/mockData';
 import { toast } from 'sonner';
 
@@ -54,85 +59,105 @@ export function NotificationsPage({ currentUser, onLogout }: NotificationsPagePr
 
   return (
     <AppLayout currentUser={currentUser} onLogout={onLogout}>
-      <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl mb-2">Notifications</h1>
-            <p className="text-muted-foreground">
-              Stay updated on your posts and community activity
-            </p>
+      <div className="min-h-screen">
+        {/* Hero Section */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#004080] via-[#003366] to-[#002952] border-b border-white/10">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjA1Ii8+PC9nPjwvc3ZnPg==')] opacity-40"></div>
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-16 relative">
+            <div className="max-w-3xl">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-1 w-12 bg-[#E31E24] rounded-full"></div>
+                <span className="text-white/80 text-sm tracking-wider uppercase">Stay Updated</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl mb-4 text-white">
+                Notifications
+              </h1>
+              <p className="text-lg md:text-xl text-white/70 max-w-2xl">
+                Stay updated on your posts and community activity
+              </p>
+              {unreadCount > 0 && (
+                <div className="mt-6">
+                  <Button 
+                    onClick={handleMarkAllAsRead}
+                    className="bg-[#E31E24] hover:bg-[#C01A1F] text-white border-0 transition-all duration-200 hover:shadow-lg hover:shadow-[#E31E24]/30"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Mark All as Read
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
-          {unreadCount > 0 && (
-            <Button onClick={handleMarkAllAsRead}>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Mark All as Read
-            </Button>
-          )}
         </div>
 
-        {/* Unread Count */}
-        {unreadCount > 0 && (
-          <Card className="bg-primary/5">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-primary" />
-                <span>You have <strong>{unreadCount}</strong> unread notification{unreadCount !== 1 ? 's' : ''}</span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Notifications List */}
-        <div className="space-y-3">
-          {notifications.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No notifications yet</p>
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 space-y-6">
+          {/* Unread Count */}
+          {unreadCount > 0 && (
+            <Card className="border-2 border-[#004080]/30 bg-[#004080]/5">
+              <CardContent className="py-4">
+                <div className="flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-[#004080]" />
+                  <span>You have <strong>{unreadCount}</strong> unread notification{unreadCount !== 1 ? 's' : ''}</span>
+                </div>
               </CardContent>
             </Card>
-          ) : (
-            notifications.map((notification) => (
-              <Card
-                key={notification.id}
-                className={`transition-all ${notification.read ? 'bg-muted/30' : 'bg-card border-l-4 border-l-primary'}`}
-              >
-                <CardContent className="py-4">
-                  <div className="flex items-start gap-4">
-                    <div className="mt-1">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="flex-1">
-                      <p className={notification.read ? 'text-muted-foreground' : ''}>
-                        {notification.message}
-                      </p>
-                      <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {formatTimestamp(notification.createdAt)}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {!notification.read && (
-                        <>
-                          <Badge variant="default" className="bg-primary/20 text-primary hover:bg-primary/30">
-                            New
-                          </Badge>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleMarkAsRead(notification.id)}
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
+          )}
+
+          {/* Notifications List */}
+          <div className="space-y-3">
+            {notifications.length === 0 ? (
+              <Card className="border-2">
+                <CardContent className="py-16 text-center">
+                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <Bell className="h-8 w-8 text-muted-foreground" />
                   </div>
+                  <h3 className="text-lg mb-2">No notifications yet</h3>
+                  <p className="text-muted-foreground">You're all caught up!</p>
                 </CardContent>
               </Card>
-            ))
-          )}
+            ) : (
+              notifications.map((notification) => (
+                <Card
+                  key={notification.id}
+                  className={`transition-all border-2 ${notification.read ? 'bg-muted/30 border-transparent' : 'bg-card border-[#004080]/30 hover:border-[#004080]/50'}`}
+                >
+                  <CardContent className="py-4">
+                    <div className="flex items-start gap-4">
+                      <div className="mt-1">
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                      <div className="flex-1">
+                        <p className={notification.read ? 'text-muted-foreground' : ''}>
+                          {notification.message}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {formatTimestamp(notification.createdAt)}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {!notification.read && (
+                          <>
+                            <Badge variant="default" className="bg-[#E31E24]/20 text-[#E31E24] border-[#E31E24]/30 hover:bg-[#E31E24]/30">
+                              New
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleMarkAsRead(notification.id)}
+                              className="hover:bg-[#004080]/10"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </AppLayout>

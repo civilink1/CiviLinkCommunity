@@ -1,7 +1,15 @@
-import { Sparkles, CheckCircle, Upload, Loader2, FileText } from 'lucide-react';
+import { useState } from 'react';
+import { Sparkles, CheckCircle, Upload, Loader2, FileText, PlusCircle } from 'lucide-react';
 import { categories, mockPosts } from '../../lib/mockData';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { AppLayout } from '../layout/AppLayout';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface CreatePostPageProps {
   currentUser: any;
@@ -134,9 +142,9 @@ export function CreatePostPage({ currentUser, onLogout }: CreatePostPageProps) {
       return;
     }
 
-    // Simulate AI verification
-    const isLegitPost = Math.random() > 0.2; // 80% chance of being legit, 20% flagged as spam
-    const aiStatus = isLegitPost ? 'approved' : 'under-review';
+    // Simulate AI verification - posts are either approved or rejected
+    const isLegitPost = Math.random() > 0.2; // 80% chance of being approved, 20% rejected
+    const aiStatus = isLegitPost ? 'approved' : 'rejected';
 
     // Create new post
     const newPost = {
@@ -158,9 +166,9 @@ export function CreatePostPage({ currentUser, onLogout }: CreatePostPageProps) {
     mockPosts.push(newPost);
     
     if (aiStatus === 'approved') {
-      toast.success('Post created and verified successfully!');
+      toast.success('✓ Post created! AI verified it as legitimate and published to community.');
     } else {
-      toast.info('Post created and sent for admin review');
+      toast.error('✗ Post not published. AI flagged it as potentially spam or inappropriate.');
     }
     
     navigate('/posts');
@@ -168,226 +176,261 @@ export function CreatePostPage({ currentUser, onLogout }: CreatePostPageProps) {
 
   return (
     <AppLayout currentUser={currentUser} onLogout={onLogout}>
-      <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-4xl">
-        <div className="mb-6">
-          <h1 className="text-3xl mb-2">Create New Post</h1>
-          <p className="text-muted-foreground">
-            Report a civic issue with AI-powered assistance
-          </p>
+      <div className="min-h-screen">
+        {/* Hero Section */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-[#004080] via-[#003366] to-[#002952] border-b border-white/10">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utb3BhY2l0eT0iLjA1Ii8+PC9nPjwvc3ZnPg==')] opacity-40"></div>
+          <div className="container mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-16 relative">
+            <div className="max-w-3xl">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="h-1 w-12 bg-[#E31E24] rounded-full"></div>
+                <span className="text-white/80 text-sm tracking-wider uppercase">Report an Issue</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl mb-4 text-white">
+                Create New Post
+              </h1>
+              <p className="text-lg md:text-xl text-white/70 max-w-2xl">
+                Report a civic issue with AI-powered assistance
+              </p>
+            </div>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Title */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Post Title</CardTitle>
-              <CardDescription>Briefly describe the issue</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Input
-                placeholder="e.g., Pothole on Main Street needs repair"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                required
-              />
-            </CardContent>
-          </Card>
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 py-8 max-w-4xl">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Title */}
+            <Card className="border-2 hover:border-[#004080]/30 transition-all duration-300">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-[#004080]/10 flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-[#004080]" />
+                  </div>
+                  <div>
+                    <CardTitle>Post Title</CardTitle>
+                    <CardDescription>Briefly describe the issue</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Input
+                  placeholder="e.g., Pothole on Main Street needs repair"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  required
+                  className="text-base"
+                />
+              </CardContent>
+            </Card>
 
-          {/* Category */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Category</CardTitle>
-              <CardDescription>Select the relevant department</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
+            {/* Category */}
+            <Card className="border-2 hover:border-[#004080]/30 transition-all duration-300">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-[#004080]/10 flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-[#004080]" />
+                  </div>
+                  <div>
+                    <CardTitle>Category</CardTitle>
+                    <CardDescription>Select the relevant department</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
 
-          {/* Description with AI */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Description</CardTitle>
-              <CardDescription>Provide details about the issue</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleGenerateDescription}
-                  disabled={isGenerating}
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Generate with AI
-                    </>
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleVerifyPost}
-                  disabled={isVerifying}
-                >
-                  {isVerifying ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Verifying...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Verify with AI
-                    </>
-                  )}
-                </Button>
-              </div>
-
-              <Textarea
-                placeholder="Describe the issue in detail..."
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={6}
-                required
-              />
-
-              {/* AI Edit */}
-              <div className="space-y-2">
-                <Label>Edit with AI</Label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="e.g., Make it more formal, Add more details, Make it brief"
-                    value={editPrompt}
-                    onChange={(e) => setEditPrompt(e.target.value)}
-                  />
+            {/* Description with AI */}
+            <Card className="border-2 hover:border-[#004080]/30 transition-all duration-300">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-[#E31E24]/10 flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-[#E31E24]" />
+                  </div>
+                  <div>
+                    <CardTitle>Description</CardTitle>
+                    <CardDescription>Provide details about the issue with AI assistance</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
-                    onClick={handleEditWithAI}
-                    disabled={isEditing}
+                    variant="outline"
+                    onClick={handleGenerateDescription}
+                    disabled={isGenerating}
+                    className="border-[#004080]/30 hover:bg-[#004080]/10 hover:border-[#004080]"
                   >
-                    {isEditing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
                     ) : (
-                      <Sparkles className="h-4 w-4" />
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Generate with AI
+                      </>
                     )}
                   </Button>
                 </div>
-              </div>
 
-              {/* Verification Result */}
-              {verificationResult && (
-                <div className={`p-4 rounded-lg ${verificationResult.isLegitimate ? 'bg-green-50 dark:bg-green-950/20' : 'bg-red-50 dark:bg-red-950/20'}`}>
-                  <div className="flex items-start gap-2 mb-2">
-                    <CheckCircle className={`h-5 w-5 ${verificationResult.isLegitimate ? 'text-green-600' : 'text-red-600'}`} />
-                    <div className="flex-1">
-                      <p className={`${verificationResult.isLegitimate ? 'text-green-900 dark:text-green-100' : 'text-red-900 dark:text-red-100'}`}>
-                        <strong>AI Verification:</strong> {verificationResult.reasoning}
-                      </p>
-                      <p className="text-sm mt-2">
-                        <strong>Confidence:</strong> {(verificationResult.confidence * 100).toFixed(0)}%
-                      </p>
-                      {verificationResult.suggestions.length > 0 && (
-                        <div className="mt-2">
-                          <strong className="text-sm">Suggestions:</strong>
-                          <ul className="list-disc list-inside text-sm mt-1">
-                            {verificationResult.suggestions.map((suggestion: string, idx: number) => (
-                              <li key={idx}>{suggestion}</li>
-                            ))}
-                          </ul>
-                        </div>
+                <Textarea
+                  placeholder="Describe the issue in detail..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={6}
+                  required
+                  className="text-base"
+                />
+
+                {/* AI Edit */}
+                <div className="space-y-2">
+                  <Label>Edit with AI</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="e.g., Make it more formal, Add more details, Make it brief"
+                      value={editPrompt}
+                      onChange={(e) => setEditPrompt(e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleEditWithAI}
+                      disabled={isEditing}
+                      className="bg-[#E31E24] hover:bg-[#C01A1F] text-white shrink-0"
+                    >
+                      {isEditing ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4" />
                       )}
-                    </div>
+                    </Button>
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Location */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Location</CardTitle>
-              <CardDescription>Where is this issue located?</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>City</Label>
-                <Input
-                  placeholder="City"
-                  value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label>Specific Location</Label>
-                <Input
-                  placeholder="e.g., Main Street & 5th Avenue"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  required
-                />
-              </div>
-            </CardContent>
-          </Card>
+                {/* Verification Result */}
+                {verificationResult && (
+                  <div className={`p-4 rounded-lg border-2 ${verificationResult.isLegitimate ? 'bg-green-50 dark:bg-green-950/20 border-green-200' : 'bg-red-50 dark:bg-red-950/20 border-red-200'}`}>
+                    <div className="flex items-start gap-2 mb-2">
+                      <CheckCircle className={`h-5 w-5 ${verificationResult.isLegitimate ? 'text-green-600' : 'text-red-600'}`} />
+                      <div className="flex-1">
+                        <p className={`${verificationResult.isLegitimate ? 'text-green-900 dark:text-green-100' : 'text-red-900 dark:text-red-100'}`}>
+                          <strong>AI Verification:</strong> {verificationResult.reasoning}
+                        </p>
+                        <p className="text-sm mt-2">
+                          <strong>Confidence:</strong> {(verificationResult.confidence * 100).toFixed(0)}%
+                        </p>
+                        {verificationResult.suggestions.length > 0 && (
+                          <div className="mt-2">
+                            <strong className="text-sm">Suggestions:</strong>
+                            <ul className="list-disc list-inside text-sm mt-1">
+                              {verificationResult.suggestions.map((suggestion: string, idx: number) => (
+                                <li key={idx}>{suggestion}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-          {/* Image Upload */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Images (Optional)</CardTitle>
-              <CardDescription>Upload up to 5 images</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <Label
-                  htmlFor="image-upload"
-                  className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80"
-                >
-                  <Upload className="h-4 w-4" />
-                  Choose Images
-                </Label>
-                <Input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                <span className="text-sm text-muted-foreground">
-                  {formData.images.length} / 5 images selected
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Location */}
+            <Card className="border-2 hover:border-[#004080]/30 transition-all duration-300">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-[#004080]/10 flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-[#004080]" />
+                  </div>
+                  <div>
+                    <CardTitle>Location</CardTitle>
+                    <CardDescription>Where is this issue located?</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>City</Label>
+                  <Input
+                    placeholder="City"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>Specific Location</Label>
+                  <Input
+                    placeholder="e.g., Main Street & 5th Avenue"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    required
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Submit */}
-          <div className="flex gap-4">
-            <Button type="submit" className="flex-1">
-              <FileText className="h-4 w-4 mr-2" />
-              Submit Post
-            </Button>
-            <Button type="button" variant="outline" onClick={() => navigate('/posts')}>
-              Cancel
-            </Button>
-          </div>
-        </form>
+            {/* Image Upload */}
+            <Card className="border-2 hover:border-[#004080]/30 transition-all duration-300">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-[#004080]/10 flex items-center justify-center">
+                    <Upload className="h-5 w-5 text-[#004080]" />
+                  </div>
+                  <div>
+                    <CardTitle>Images (Optional)</CardTitle>
+                    <CardDescription>Upload up to 5 images</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <Label
+                    htmlFor="image-upload"
+                    className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Choose Images
+                  </Label>
+                  <Input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {formData.images.length} / 5 images selected
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Submit */}
+            <div className="flex gap-4">
+              <Button 
+                type="submit" 
+                className="w-full bg-[#004080] hover:bg-[#003366] text-white border-0 transition-all duration-200 hover:shadow-lg hover:shadow-[#004080]/30"
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Submit Post
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
     </AppLayout>
   );

@@ -17,7 +17,13 @@ interface CityGovAuthProps {
 export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{
+    password?: string;
+    email?: string;
+  }>({});
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
     password: '',
     cityName: '',
@@ -27,48 +33,117 @@ export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
     contactPhone: ''
   });
 
-  const cities = [
-    'San Francisco',
-    'Los Angeles',
-    'San Diego',
-    'Sacramento',
-    'Oakland',
-    'San Jose'
-  ];
-
-  const states = [
-    'CA', 'NY', 'TX', 'FL', 'IL', 'PA', 'OH', 'GA', 'NC', 'MI'
-  ];
-
-  const departments = [
-    'Mayor & Mayor Pro Tem',
+  const positions = [
+    'Mayor',
+    'Commissioner',
     'Infrastructure Department',
     'Transportation Department',
     'Parks & Recreation',
     'Public Safety',
-    'Commerce Department'
+    'Commerce Department',
+    'Other'
   ];
+
+  const usStates = [
+    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+  ];
+
+  // Real-time validation
+  const validatePassword = (password: string) => {
+    if (!password) return '';
+    if (password.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+    return '';
+  };
+
+  const validateEmail = (email: string) => {
+    if (!email) return '';
+    // Check if it's a government email
+    if (!email.endsWith('.gov') && !email.includes('.gov.')) {
+      return 'Must be an official government email address';
+    }
+    return '';
+  };
+
+  const handlePasswordChange = (password: string) => {
+    setFormData({ ...formData, password });
+    const passwordError = validatePassword(password);
+    setValidationErrors({ ...validationErrors, password: passwordError });
+  };
+
+  const handleEmailChange = (email: string) => {
+    setFormData({ ...formData, email });
+    const emailError = validateEmail(email);
+    setValidationErrors({ ...validationErrors, email: emailError });
+  };
+
+  // Check if forms are valid
+  const isStep1Valid = () => {
+    return (
+      formData.cityName &&
+      formData.state &&
+      formData.email &&
+      formData.password.length >= 6 &&
+      !validationErrors.password &&
+      !validationErrors.email
+    );
+  };
+
+  const isStep2Valid = () => {
+    return (
+      formData.name &&
+      formData.department &&
+      formData.officialTitle &&
+      formData.contactPhone
+    );
+  };
+
+  const isLoginValid = () => {
+    return formData.email && formData.password;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
     if (isSignUp && step === 1) {
-      // Move to verification step
+      // Validate before moving to step 2
+      if (!isStep1Valid()) {
+        setIsLoading(false);
+        toast.error('Please fix the errors before continuing');
+        return;
+      }
+      // Move to step 2
       setStep(2);
+      setIsLoading(false);
       return;
     }
 
-    if (isSignUp) {
-      toast.success('Application submitted! You will receive verification within 24-48 hours.');
+    if (isSignUp && step === 2) {
+      // Create account and go directly to dashboard
+      toast.success('Account created successfully!');
       setTimeout(() => {
+        setIsLoading(false);
         onSuccess(formData.cityName);
-      }, 1500);
-    } else {
-      // Simple login
+      }, 1000);
+      return;
+    }
+
+    // Login flow
+    if (!isSignUp) {
       if (formData.email && formData.password) {
         toast.success('Logged in successfully!');
-        onSuccess(formData.cityName || 'San Francisco');
+        setTimeout(() => {
+          setIsLoading(false);
+          onSuccess(formData.cityName || 'San Francisco');
+        }, 1000);
       } else {
+        setIsLoading(false);
         toast.error('Please enter your credentials');
       }
     }
@@ -176,7 +251,7 @@ export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
                   {isSignUp 
                     ? step === 1 
                       ? 'Create your city government account'
-                      : 'Complete your verification details'
+                      : 'Complete your account details'
                     : 'Access your city dashboard'
                   }
                 </CardDescription>
@@ -189,20 +264,14 @@ export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
                       <>
                         <div className="space-y-2">
                           <Label htmlFor="city">City</Label>
-                          <Select
+                          <Input
+                            id="city"
+                            placeholder="Enter your city"
                             value={formData.cityName}
-                            onValueChange={(value) => setFormData({ ...formData, cityName: value })}
+                            onChange={(e) => setFormData({ ...formData, cityName: e.target.value })}
                             required
-                          >
-                            <SelectTrigger id="city">
-                              <SelectValue placeholder="Select your city" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {cities.map(city => (
-                                <SelectItem key={city} value={city}>{city}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            className="h-11"
+                          />
                         </div>
 
                         <div className="space-y-2">
@@ -212,11 +281,11 @@ export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
                             onValueChange={(value) => setFormData({ ...formData, state: value })}
                             required
                           >
-                            <SelectTrigger id="state">
-                              <SelectValue placeholder="Select state" />
+                            <SelectTrigger id="state" className="h-11">
+                              <SelectValue placeholder="Select your state" />
                             </SelectTrigger>
                             <SelectContent>
-                              {states.map(state => (
+                              {usStates.map(state => (
                                 <SelectItem key={state} value={state}>{state}</SelectItem>
                               ))}
                             </SelectContent>
@@ -230,7 +299,7 @@ export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
                             type="email"
                             placeholder="official@city.gov"
                             value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            onChange={(e) => handleEmailChange(e.target.value)}
                             required
                           />
                           <p className="text-xs text-muted-foreground">
@@ -245,30 +314,45 @@ export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
                             type="password"
                             placeholder="Create a secure password"
                             value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            onChange={(e) => handlePasswordChange(e.target.value)}
                             required
                           />
+                          {validationErrors.password && (
+                            <p className="text-xs text-red-500">{validationErrors.password}</p>
+                          )}
                         </div>
 
-                        <Button type="submit" className="w-full" size="lg">
-                          Continue to Verification
+                        <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                          Continue
                         </Button>
                       </>
                     ) : (
                       // Sign Up - Step 2: Verification
                       <>
                         <div className="space-y-2">
-                          <Label htmlFor="department">Department</Label>
+                          <Label htmlFor="name">Full Name</Label>
+                          <Input
+                            id="name"
+                            placeholder="Enter your full name"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            required
+                            className="h-11"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="department">Position</Label>
                           <Select
                             value={formData.department}
                             onValueChange={(value) => setFormData({ ...formData, department: value })}
                             required
                           >
-                            <SelectTrigger id="department">
-                              <SelectValue placeholder="Select department" />
+                            <SelectTrigger id="department" className="h-11">
+                              <SelectValue placeholder="Select your position" />
                             </SelectTrigger>
                             <SelectContent>
-                              {departments.map(dept => (
+                              {positions.map(dept => (
                                 <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                               ))}
                             </SelectContent>
@@ -283,6 +367,7 @@ export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
                             value={formData.officialTitle}
                             onChange={(e) => setFormData({ ...formData, officialTitle: e.target.value })}
                             required
+                            className="h-11"
                           />
                         </div>
 
@@ -295,29 +380,13 @@ export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
                             value={formData.contactPhone}
                             onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
                             required
+                            className="h-11"
                           />
                         </div>
 
-                        <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                          <p className="text-sm text-blue-900 dark:text-blue-100">
-                            <strong>Verification Process:</strong> Your application will be reviewed by our team. 
-                            You'll receive access within 24-48 hours after verification.
-                          </p>
-                        </div>
-
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => setStep(1)}
-                          >
-                            Back
-                          </Button>
-                          <Button type="submit" className="w-full" size="lg">
-                            Submit Application
-                          </Button>
-                        </div>
+                        <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                          Create Account
+                        </Button>
                       </>
                     )
                   ) : (
@@ -347,7 +416,7 @@ export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
                         />
                       </div>
 
-                      <Button type="submit" className="w-full" size="lg">
+                      <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
                         Login to Portal
                       </Button>
                     </>
@@ -361,6 +430,7 @@ export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
                         setIsSignUp(!isSignUp);
                         setStep(1);
                         setFormData({
+                          name: '',
                           email: '',
                           password: '',
                           cityName: '',

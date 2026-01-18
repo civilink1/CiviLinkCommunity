@@ -168,15 +168,6 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <motion.div 
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-300 px-5 py-2.5 rounded-full"
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 400 }}
-              >
-                <Sparkles className="h-4 w-4" />
-                <span className="text-sm">AI-Powered Civic Engagement</span>
-              </motion.div>
-              
               <h1 className="text-5xl md:text-7xl leading-tight text-white">
                 Your Voice,<br />
                 <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
@@ -333,7 +324,7 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
@@ -343,24 +334,13 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
-                  onHoverStart={() => setHoveredCard(index)}
-                  onHoverEnd={() => setHoveredCard(null)}
-                  whileHover={{ y: -10 }}
                 >
-                  <div className="relative group h-full">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} rounded-2xl blur-xl opacity-0 group-hover:opacity-50 transition-all duration-300`} />
+                  <div className="relative h-full">
                     <Card className="relative h-full backdrop-blur-xl bg-slate-800/90 border border-white/20 shadow-xl overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
-                      <CardHeader className="relative">
-                        <motion.div
-                          className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg`}
-                          animate={hoveredCard === index ? { rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] } : {}}
-                          transition={{ duration: 0.5 }}
-                        >
-                          <Icon className="h-7 w-7 text-white" />
-                        </motion.div>
-                        <CardTitle className="text-white text-xl">{feature.title}</CardTitle>
-                        <CardDescription className="text-slate-300">{feature.description}</CardDescription>
+                      <CardHeader className="relative p-8">
+                        <CardTitle className="text-white text-xl mb-3">{feature.title}</CardTitle>
+                        <CardDescription className="text-slate-300 leading-relaxed">{feature.description}</CardDescription>
                       </CardHeader>
                     </Card>
                   </div>
