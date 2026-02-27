@@ -38,7 +38,7 @@ export function UserProfileModal({ isOpen, onClose, userId, onPostClick }: UserP
           <DialogHeader>
             <DialogTitle className="text-2xl">Citizen Profile</DialogTitle>
             <DialogDescription className="sr-only">
-              View citizen profile and civic engagement history
+              View resident profile and community engagement history
             </DialogDescription>
           </DialogHeader>
 

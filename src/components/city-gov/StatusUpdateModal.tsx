@@ -48,7 +48,7 @@ export function StatusUpdateModal({ isOpen, onClose, post, currentStatus, onUpda
         <DialogHeader>
           <DialogTitle className="text-2xl">Update Issue Status</DialogTitle>
           <DialogDescription className="text-base">
-            Change the status of this civic issue and provide details for the citizen
+            Change the status of this issue and provide details for the resident
           </DialogDescription>
         </DialogHeader>
 

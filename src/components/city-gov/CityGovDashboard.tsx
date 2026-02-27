@@ -10,6 +10,8 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import {
   LayoutDashboard,
   Map,
@@ -29,9 +31,15 @@ import {
   Building2,
   ClipboardList,
   Calendar,
-  RefreshCw
+  RefreshCw,
+  Settings,
+  Bell,
+  Search,
+  Check,
+  X,
+  Save,
 } from 'lucide-react';
-import { mockPosts, categories, mockUsers } from '../../lib/mockData';
+import { mockPosts, categories, mockUsers, mockCommunity, createAnnouncement, approveUser, denyUser, updateCommunitySettings } from '../../lib/mockData';
 import { POST_STATUSES } from '../../config/constants';
 
 interface CityGovDashboardProps {
@@ -53,10 +61,27 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
   const [isUserProfileModalOpen, setIsUserProfileModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
+  // Settings state
+  const [settingsCommunityName, setSettingsCommunityName] = useState(mockCommunity.name);
+  const [settingsHomeCount, setSettingsHomeCount] = useState(String(mockCommunity.homeCount));
+  const [settingsRequireApproval, setSettingsRequireApproval] = useState(mockCommunity.requireApproval);
+  const [settingsCommentsEnabled, setSettingsCommentsEnabled] = useState(mockCommunity.commentsEnabled);
+  const [announcementTitle, setAnnouncementTitle] = useState('');
+  const [announcementMessage, setAnnouncementMessage] = useState('');
+  const [announcementUrgent, setAnnouncementUrgent] = useState(false);
+
+  // Users state
+  const [userSearch, setUserSearch] = useState('');
+  const [userFilter, setUserFilter] = useState<'all' | 'APPROVED' | 'PENDING' | 'DENIED'>('all');
+  const [residentList, setResidentList] = useState(mockUsers);
+
+  // Display name — avoid "Sunset Ridge HOA HOA"
+  const displayName = cityName.includes('HOA') ? cityName : `${cityName} HOA`;
+
   // Current user for gov dashboard (mock)
   const currentUser = {
-    name: 'Government Admin',
-    role: 'admin',
+    name: 'HOA Admin',
+    role: 'HOA_ADMIN',
     city: cityName,
   };
 
@@ -81,7 +106,7 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
     }));
 
     toast.success(`Status updated to \"${getStatusLabel(newStatus)}\"`, {
-      description: 'The citizen and all endorsers will be notified of this change.',
+      description: 'The resident and all endorsers will be notified of this change.',
     });
   };
 
@@ -89,92 +114,29 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
   const cityMatchedPosts = posts.filter(p => p.city === cityName);
   const cityPosts = cityMatchedPosts.length > 0 ? cityMatchedPosts : posts;
 
-  // AI-Powered Mock Data
-  /**
-   * TODO - Backend Integration:
-   * Replace these mock predictions with real AI API calls:
-   * - GET /api/ai/trend-forecast - Returns predicted trends
-   * - GET /api/ai/resource-optimization - Returns staffing recommendations
-   * - GET /api/ai/budget-analysis - Returns cost estimates
-   * - POST /api/ai/generate-report - Generates AI reports
-   */
-  const aiPredictions = {
-    trendForecast: categories.map(category => {
-      const currentWeek = cityPosts.filter(p => p.category === category).length;
-      const randomChange = Math.floor(Math.random() * 60) - 20; // Random between -20 and +40
-      const nextWeek = Math.max(1, currentWeek + Math.floor(currentWeek * (randomChange / 100)));
-
-      const insights: Record<string, string> = {
-        'Infrastructure': 'Upcoming winter weather predicted to increase pothole reports',
-        'Transportation': 'Major event downtown next week will increase traffic concerns',
-        'Parks & Recreation': 'Off-season decrease in park maintenance issues expected',
-        'Safety': 'Enhanced community policing expected to reduce incident reports',
-        'Environment': 'Spring cleaning initiatives driving increased litter and pollution reports',
-        'Housing': 'New development projects causing temporary increase in construction complaints',
-        'Commerce': 'Business district renovation leading to accessibility concerns',
-        'Health': 'Flu season increasing health facility capacity concerns'
-      };
-
-      return {
-        category,
-        currentWeek,
-        nextWeek,
-        confidence: Math.floor(Math.random() * 20) + 75, // Random between 75-95%
-        reason: insights[category] || `Seasonal trends affecting ${category.toLowerCase()} issue volume`,
-        icon: AlertCircle
-      };
-    }),
-    resourceOptimization: {
-      recommendations: [
-        {
-          department: 'Public Works',
-          currentStaff: 12,
-          recommendedStaff: 16,
-          reason: 'Increased infrastructure issues predicted',
-          impact: 'High',
-          color: 'text-red-600 bg-red-50'
-        },
-        {
-          department: 'Parks Department',
-          currentStaff: 8,
-          recommendedStaff: 6,
-          reason: 'Seasonal decrease in park-related issues',
-          impact: 'Low',
-          color: 'text-green-600 bg-green-50'
-        }
-      ],
-      estimatedCostSavings: '$45,000/month',
-      efficiencyGain: '23%'
-    },
-    budgetAnalysis: {
-      highPriorityIssues: cityPosts.filter(p => p.endorsements > 100).length,
-      estimatedTotalCost: '$284,500',
-      averageCostPerIssue: '$3,200',
-      estimatedTimeframe: '6-8 weeks',
-      breakdown: categories
-        .map(category => {
-          const categoryIssues = cityPosts.filter(p => p.category === category);
-          if (categoryIssues.length === 0) return null;
-
-          // Calculate cost based on number of issues and average endorsements
-          const baseCost = categoryIssues.length * 12000; // Base $12k per issue
-          const endorsementBonus = categoryIssues.reduce((sum, p) => sum + p.endorsements, 0) * 50; // $50 per endorsement
-          const totalCost = baseCost + endorsementBonus;
-
-          return {
-            category,
-            cost: `$${totalCost.toLocaleString()}`,
-            issues: categoryIssues.length
-          };
-        })
-        .filter(Boolean) // Remove null entries
-        .sort((a, b) => {
-          // Sort by cost (highest first)
-          const aCost = parseInt(a!.cost.replace(/[$,]/g, ''));
-          const bCost = parseInt(b!.cost.replace(/[$,]/g, ''));
-          return bCost - aCost;
-        })
-    }
+  // AI-Powered Mock Data (simplified — forecasting removed)
+  const reportData = {
+    totalIssues: stats.totalIssues,
+    totalEndorsements: stats.totalEndorsements,
+    avgEndorsements: stats.avgEndorsements,
+    budgetImpact: 'N/A',
+    avgResolution: '2 days',
+    trendDirection: 'Stable',
+    trends: categories.map(category => ({
+      category,
+      change: '—',
+      isIncrease: false,
+      confidence: 0,
+      insight: `${category} issues are being monitored by the board.`
+    })),
+    budgetBreakdown: [] as any[],
+    recommendations: [
+      'Respond to high-priority issues (10+ endorsements) within 48 hours.',
+      'Post announcements for scheduled maintenance to reduce duplicate reports.',
+      'Review pending resident approvals regularly.',
+      'Use bulk maintenance contracts to reduce per-issue costs.',
+      'Keep community pool/gym hours updated in announcements.',
+    ]
   };
 
   // Sort by endorsements
@@ -258,54 +220,6 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
 
   const maxIntensity = Math.max(...heatMapData.map(d => d.intensity), 1);
 
-  // Mock Report Data
-  const reportData = {
-    totalIssues: stats.totalIssues,
-    totalEndorsements: stats.totalEndorsements,
-    avgEndorsements: stats.avgEndorsements,
-    budgetImpact: aiPredictions.budgetAnalysis.estimatedTotalCost,
-    avgResolution: '2 days',
-    trendDirection: '18% increase',
-    trends: categories.map(category => {
-      // Generate trend data for each category
-      const currentWeek = cityPosts.filter(p => p.category === category).length;
-      const randomChange = Math.floor(Math.random() * 60) - 20; // Random between -20 and +40
-      const nextWeek = Math.max(1, currentWeek + Math.floor(currentWeek * (randomChange / 100)));
-      const percentChange = currentWeek > 0 ? ((nextWeek - currentWeek) / currentWeek * 100) : 0;
-      const isIncrease = percentChange > 0;
-
-      const insights: Record<string, string> = {
-        'Infrastructure': 'Winter weather expected to significantly increase pothole and road damage reports',
-        'Transportation': 'Major downtown event will drive increased traffic and parking concerns',
-        'Parks & Recreation': 'Off-season decrease as fewer citizens use outdoor facilities',
-        'Safety': 'Enhanced community policing expected to reduce incident reports',
-        'Environment': 'Spring cleaning initiatives driving increased litter and pollution reports',
-        'Housing': 'New development projects causing temporary increase in construction complaints',
-        'Commerce': 'Business district renovation leading to accessibility concerns',
-        'Health': 'Flu season increasing health facility capacity concerns'
-      };
-
-      return {
-        category,
-        change: `${isIncrease ? '+' : ''}${Math.abs(Math.round(percentChange))}%`,
-        isIncrease,
-        confidence: Math.floor(Math.random() * 20) + 75, // Random between 75-95%
-        insight: insights[category] || `Seasonal trends affecting ${category.toLowerCase()} issue volume`
-      };
-    }),
-    budgetBreakdown: aiPredictions.budgetAnalysis.breakdown.map(item => ({
-      ...item,
-      percentage: (parseInt(item.cost.replace(/[$,]/g, '')) / parseInt(aiPredictions.budgetAnalysis.estimatedTotalCost.replace(/[$,]/g, ''))) * 100
-    })),
-    recommendations: [
-      'Prioritize infrastructure issues before winter weather intensifies - deploy additional crews to high-traffic areas',
-      'Reduce Parks Department staffing by 2 personnel during off-season to optimize budget allocation',
-      'Implement temporary traffic management plan for upcoming downtown event to reduce congestion complaints',
-      'Increase community engagement by responding to high-priority issues (50+ endorsements) within 48 hours',
-      'Consider bulk contracting for infrastructure repairs to reduce per-issue costs by estimated 15-20%'
-    ]
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header with Gradient */}
@@ -319,9 +233,9 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
                 <div className="hidden md:block w-px h-10 bg-gradient-to-b from-transparent via-zinc-700 to-transparent"></div>
                 <div>
                   <div className="flex items-center gap-3 mb-1">
-                    <h1 className="text-xl font-semibold">{cityName} Government</h1>
+                    <h1 className="text-xl font-semibold">{displayName}</h1>
                   </div>
-                  <p className="text-sm text-muted-foreground">Tracking Portal</p>
+                  <p className="text-sm text-muted-foreground">Community Dashboard</p>
                 </div>
               </div>
               <Button
@@ -355,7 +269,7 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
             </CardHeader>
             <CardContent className="relative">
               <div className="text-5xl font-bold mb-2">{stats.totalIssues}</div>
-              <p className="text-sm text-blue-100">Reported by citizens</p>
+              <p className="text-sm text-blue-100">Reported by residents</p>
             </CardContent>
           </Card>
 
@@ -414,7 +328,7 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
 
         {/* Main Content Tabs - Enhanced */}
         <Tabs defaultValue="posts" className="space-y-6">
-          <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-2">
+          <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-4">
             <TabsTrigger
               value="posts"
               className="flex items-center gap-2"
@@ -428,6 +342,20 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
             >
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="users"
+              className="flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Members</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="settings"
+              className="flex items-center gap-2"
+            >
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
@@ -637,155 +565,276 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
 
-            {/* AI-Powered Insights Header */}
-            <Card className="border-2 bg-gradient-to-br from-purple-50 to-blue-50">
-              <CardContent className="py-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold flex items-center gap-2">
-                      Predictive Insights
-                      <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0">AI</Badge>
-                    </h3>
-                    <p className="text-sm text-muted-foreground">Real-time predictions and optimization recommendations</p>
+          {/* Members Tab */}
+          <TabsContent value="users" className="space-y-6">
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-[#004080]" />
+                  Member Management
+                </CardTitle>
+                <CardDescription>Review and approve residents who have requested to join</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      placeholder="Search members..."
+                      value={userSearch}
+                      onChange={e => setUserSearch(e.target.value)}
+                    />
                   </div>
-                  <Button
-                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
-                    onClick={() => {
-                      /** TODO - Backend Integration: POST /api/ai/generate-report 
-                       * Generate comprehensive AI report with all insights, trends, and recommendations
-                       * Parameters: { cityName, dateRange, categories, includeForecasts: true }
-                       */
-                      toast.success('Report Generated', {
-                        description: 'Your comprehensive report is ready for download'
-                      });
-                      setIsReportModalOpen(true);
-                    }}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Generate Report
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* AI Trend Forecasting */}
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle className="text-xl">Trend Forecasting</CardTitle>
-                <CardDescription>Predicted issue volumes based on seasonal patterns, weather, and events</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {aiPredictions.trendForecast.map((trend, index) => {
-                    const Icon = trend.icon;
-                    const percentChange = ((trend.nextWeek - trend.currentWeek) / trend.currentWeek * 100);
-                    const isIncrease = percentChange > 0;
-
-                    return (
-                      <div key={index} className="p-4 rounded-xl border-2 hover:border-blue-500/50 transition-all">
-                        <div className="flex items-start justify-between gap-4 mb-4">
-                          <div>
-                            <h4 className="font-semibold">{trend.category}</h4>
-                            <p className="text-sm text-muted-foreground">{trend.reason}</p>
-                          </div>
-
-                          <Badge variant="secondary" className="bg-purple-100 text-purple-700">
-                            {trend.confidence}% Confidence
-                          </Badge>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-3">
-                          <div className="p-3 rounded-lg bg-gray-50 border">
-                            <p className="text-xs text-muted-foreground mb-1">Current Week</p>
-                            <p className="text-xl font-bold">{trend.currentWeek}</p>
-                          </div>
-                          <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
-                            <p className="text-xs text-blue-600 mb-1">Next Week</p>
-                            <p className="text-xl font-bold text-blue-600">{trend.nextWeek}</p>
-                          </div>
-                          <div className={`p-3 rounded-lg ${isIncrease ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
-                            <p className={`text-xs mb-1 ${isIncrease ? 'text-red-600' : 'text-green-600'}`}>Change</p>
-                            <p className={`text-xl font-bold ${isIncrease ? 'text-red-600' : 'text-green-600'}`}>
-                              {isIncrease ? '+' : ''}{percentChange.toFixed(0)}%
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* AI Budget Impact Analysis */}
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle className="text-xl">Budget Impact Analysis</CardTitle>
-                <CardDescription>Cost estimates and timeline for addressing high-priority issues</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-6">
-                  <h4 className="font-semibold mb-4">Cost Breakdown by Category</h4>
-                  <div className="space-y-3">
-                    {aiPredictions.budgetAnalysis.breakdown.map((item, index) => (
-                      <div key={index} className="flex items-center gap-4 p-4 rounded-xl border-2 hover:border-amber-500/50 transition-all">
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-semibold">{item.category}</span>
-                            <div className="flex items-center gap-3">
-                              <Badge variant="secondary">
-                                {item.issues} issues
-                              </Badge>
-                              <span className="text-lg font-bold text-amber-600">{item.cost}</span>
-                            </div>
-                          </div>
-                          <div className="w-full h-3 bg-muted rounded-full overflow-hidden border-2">
-                            <div
-                              className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
-                              style={{
-                                width: `${(parseInt(item.cost.replace(/[$,]/g, '')) / parseInt(aiPredictions.budgetAnalysis.estimatedTotalCost.replace(/[$,]/g, ''))) * 100}%`
-                              }}
-                            ></div>
-                          </div>
-                        </div>
-                      </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {(['All', 'APPROVED', 'PENDING', 'DENIED'] as const).map(f => (
+                      <Button
+                        key={f}
+                        size="sm"
+                        variant={userFilter === f ? 'default' : 'outline'}
+                        className={userFilter === f ? 'bg-[#004080] text-white' : ''}
+                        onClick={() => setUserFilter(f as any)}
+                      >
+                        {f === 'All' ? 'All' : f.charAt(0) + f.slice(1).toLowerCase()}
+                      </Button>
                     ))}
                   </div>
                 </div>
-
-                <div className="grid md:grid-cols-4 gap-4">
-                  <Card className="border-2">
-                    <CardContent className="py-4 text-center">
-                      <AlertCircle className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                      <p className="text-xs text-muted-foreground mb-1">High Priority Issues</p>
-                      <p className="text-2xl font-bold text-blue-600">{aiPredictions.budgetAnalysis.highPriorityIssues}</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-2">
-                    <CardContent className="py-4 text-center">
-                      <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                      <p className="text-xs text-muted-foreground mb-1">Estimated Total Cost</p>
-                      <p className="text-2xl font-bold text-green-600">{aiPredictions.budgetAnalysis.estimatedTotalCost}</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-2">
-                    <CardContent className="py-4 text-center">
-                      <BarChart3 className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                      <p className="text-xs text-muted-foreground mb-1">Avg. Cost Per Issue</p>
-                      <p className="text-2xl font-bold text-purple-600">{aiPredictions.budgetAnalysis.averageCostPerIssue}</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-2">
-                    <CardContent className="py-4 text-center">
-                      <Clock className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                      <p className="text-xs text-muted-foreground mb-1">Est. Timeframe</p>
-                      <p className="text-2xl font-bold text-orange-600">{aiPredictions.budgetAnalysis.estimatedTimeframe}</p>
-                    </CardContent>
-                  </Card>
+                <div className="overflow-x-auto rounded-xl border">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-semibold">Name</th>
+                        <th className="px-4 py-3 text-left font-semibold">Email</th>
+                        <th className="px-4 py-3 text-left font-semibold">Phone</th>
+                        <th className="px-4 py-3 text-left font-semibold">Unit</th>
+                        <th className="px-4 py-3 text-left font-semibold">Status</th>
+                        <th className="px-4 py-3 text-left font-semibold">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {residentList
+                        .filter(u => {
+                          const q = userSearch.toLowerCase();
+                          const matchSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+                          const matchFilter = userFilter === 'All' || u.approvalStatus === userFilter;
+                          return matchSearch && matchFilter;
+                        })
+                        .map(u => (
+                          <tr key={u.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 font-medium">{u.name}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{(u as any).phone ?? '—'}</td>
+                            <td className="px-4 py-3 text-muted-foreground">{u.unit ?? '—'}</td>
+                            <td className="px-4 py-3">
+                              <Badge
+                                className={
+                                  u.approvalStatus === 'APPROVED'
+                                    ? 'bg-green-100 text-green-700 border-green-200'
+                                    : u.approvalStatus === 'PENDING'
+                                    ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                                    : 'bg-red-100 text-red-700 border-red-200'
+                                }
+                                variant="outline"
+                              >
+                                {u.approvalStatus}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex gap-2">
+                                {u.approvalStatus !== 'APPROVED' && (
+                                  <Button
+                                    size="sm"
+                                    className="h-7 bg-green-600 hover:bg-green-700 text-white"
+                                    onClick={() => {
+                                      approveUser(u.id);
+                                      setResidentList(prev => prev.map(x => x.id === u.id ? { ...x, approvalStatus: 'APPROVED' as const } : x));
+                                      toast.success(`${u.name} approved`);
+                                    }}
+                                  >
+                                    <Check className="h-3 w-3 mr-1" /> Approve
+                                  </Button>
+                                )}
+                                {u.approvalStatus !== 'DENIED' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 border-red-300 text-red-600 hover:bg-red-50"
+                                    onClick={() => {
+                                      denyUser(u.id);
+                                      setResidentList(prev => prev.map(x => x.id === u.id ? { ...x, approvalStatus: 'DENIED' as const } : x));
+                                      toast.error(`${u.name} denied`);
+                                    }}
+                                  >
+                                    <X className="h-3 w-3 mr-1" /> Deny
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                  {residentList.filter(u => {
+                    const q = userSearch.toLowerCase();
+                    const matchSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+                    const matchFilter = userFilter === 'All' || u.approvalStatus === userFilter;
+                    return matchSearch && matchFilter;
+                  }).length === 0 && (
+                    <div className="py-12 text-center text-muted-foreground">No members found</div>
+                  )}
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-6">
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-[#004080]" />
+                  Community Settings
+                </CardTitle>
+                <CardDescription>Update your community details and preferences</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="mb-1 block">Community Name</Label>
+                    <Input
+                      value={settingsCommunityName}
+                      onChange={e => setSettingsCommunityName(e.target.value)}
+                      placeholder="e.g. Sunset Ridge"
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Number of Homes</Label>
+                    <Input
+                      type="number"
+                      value={settingsHomeCount}
+                      onChange={e => setSettingsHomeCount(Number(e.target.value))}
+                      placeholder="e.g. 120"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-3 pt-2">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settingsRequireApproval}
+                      onChange={e => setSettingsRequireApproval(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-[#004080]"
+                    />
+                    <span className="text-sm font-medium">Require admin approval before residents can join</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={settingsCommentsEnabled}
+                      onChange={e => setSettingsCommentsEnabled(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-[#004080]"
+                    />
+                    <span className="text-sm font-medium">Allow residents to leave comments on issues</span>
+                  </label>
+                </div>
+                <Button
+                  className="bg-[#004080] hover:bg-[#003060] text-white mt-2"
+                  onClick={() => {
+                    updateCommunitySettings({
+                      name: settingsCommunityName,
+                      homeCount: settingsHomeCount,
+                      requireApproval: settingsRequireApproval,
+                      commentsEnabled: settingsCommentsEnabled,
+                    });
+                    toast.success('Settings saved');
+                  }}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Settings
+                </Button>
+              </CardContent>
+            </Card>
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-[#004080]" />
+                  Post Announcement
+                </CardTitle>
+                <CardDescription>Notify all residents with a community-wide message</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="mb-1 block">Title</Label>
+                  <Input
+                    value={announcementTitle}
+                    onChange={e => setAnnouncementTitle(e.target.value)}
+                    placeholder="e.g. Pool Maintenance This Weekend"
+                  />
+                </div>
+                <div>
+                  <Label className="mb-1 block">Message</Label>
+                  <textarea
+                    className="w-full min-h-[90px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={announcementMessage}
+                    onChange={e => setAnnouncementMessage(e.target.value)}
+                    placeholder="Write your announcement here..."
+                  />
+                </div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={announcementUrgent}
+                    onChange={e => setAnnouncementUrgent(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-red-600"
+                  />
+                  <span className="text-sm font-medium text-red-600">Mark as urgent</span>
+                </label>
+                <Button
+                  className="bg-[#004080] hover:bg-[#003060] text-white"
+                  disabled={!announcementTitle.trim() || !announcementMessage.trim()}
+                  onClick={() => {
+                    createAnnouncement({
+                      communityId: mockCommunity.id,
+                      title: announcementTitle.trim(),
+                      message: announcementMessage.trim(),
+                      urgent: announcementUrgent,
+                      authorName: cityName,
+                    });
+                    setAnnouncementTitle('');
+                    setAnnouncementMessage('');
+                    setAnnouncementUrgent(false);
+                    toast.success('Announcement posted to all residents');
+                  }}
+                >
+                  <Bell className="h-4 w-4 mr-2" />
+                  Post Announcement
+                </Button>
+              </CardContent>
+            </Card>
+            {mockCommunity.announcements.length > 0 && (
+              <Card className="border-2">
+                <CardHeader>
+                  <CardTitle className="text-base">Recent Announcements</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[...mockCommunity.announcements].reverse().map(ann => (
+                    <div key={ann.id} className={`p-4 rounded-xl border-2 ${ann.urgent ? 'border-red-200 bg-red-50' : 'border-gray-100 bg-gray-50'}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-semibold text-sm">{ann.title}</p>
+                          <p className="text-sm text-muted-foreground mt-0.5">{ann.message}</p>
+                        </div>
+                        {ann.urgent && <Badge className="bg-red-500 text-white border-0 shrink-0">Urgent</Badge>}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">{new Date(ann.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
@@ -837,7 +886,7 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
         cityName={cityName}
-        aiPredictions={aiPredictions}
+        aiPredictions={{}}
         stats={stats}
         reportData={reportData}
       />

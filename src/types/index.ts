@@ -1,9 +1,53 @@
 /**
- * CiviLink Type Definitions
- * 
- * This file contains all TypeScript interfaces and types used throughout the application.
- * GitHub Copilot: Use these types when implementing backend API calls.
+ * CiviLink Community – Type Definitions
+ *
+ * HOA / neighbourhood version of CiviLink.
+ * All shared TypeScript interfaces live here.
  */
+
+// ============================================================================
+// ROLES
+// ============================================================================
+
+export type UserRole = 'HOA_ADMIN' | 'HOA_MODERATOR' | 'RESIDENT';
+
+export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'DENIED';
+
+// ============================================================================
+// COMMUNITY (formerly City)
+// ============================================================================
+
+export type PlanTier = 'starter' | 'standard' | 'premium' | 'enterprise';
+
+export interface CommunityLeader {
+  name: string;
+  role: string;        // e.g. "Board President", "Property Manager"
+  email: string;
+  phone?: string;
+}
+
+export interface Announcement {
+  id: string;
+  communityId: string;
+  title: string;
+  message: string;
+  urgent: boolean;
+  createdAt: string;
+  authorName: string;
+}
+
+export interface Community {
+  id: string;
+  name: string;
+  planTier: PlanTier;
+  homeCount: number;
+  inviteCode: string;
+  requireApproval: boolean;
+  commentsEnabled: boolean;
+  leadership: CommunityLeader[];
+  announcements: Announcement[];
+  createdAt: string;
+}
 
 // ============================================================================
 // USER & AUTHENTICATION TYPES
@@ -13,15 +57,20 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'user' | 'admin';
-  city: string;
-  state: string;
-  address: string;
-  zipCode: string;
+  role: UserRole;
+  communityId: string;
+  approvalStatus: ApprovalStatus;
+  unit?: string;            // lot / unit / address within community
+  phone?: string;
+  address?: string;
   joinDate: string;
   contributionScore: number;
   avatarUrl?: string;
   bio?: string;
+  // legacy fields kept for compat
+  city?: string;
+  state?: string;
+  zipCode?: string;
 }
 
 export interface AuthCredentials {
@@ -31,62 +80,86 @@ export interface AuthCredentials {
 
 export interface RegisterData extends AuthCredentials {
   name: string;
-  city: string;
-  state: string;
-  address: string;
-  zipCode: string;
+  inviteCode: string;
+  unit?: string;
 }
 
 // ============================================================================
-// POST TYPES
+// REPORT (formerly Post) TYPES
 // ============================================================================
 
-export type PostStatus = 'under-review' | 'approved' | 'rejected';
+export type ReportStatus =
+  | 'pending'
+  | 'under_review'
+  | 'in_progress'
+  | 'completed'
+  | 'rejected'
+  | 'closed';
 
-export type PostCategory = 
-  | 'Infrastructure'
-  | 'Transportation'
-  | 'Parks'
-  | 'Public Safety'
-  | 'Education'
-  | 'Health';
+export type PostStatus = ReportStatus;
 
-export interface Post {
+export type ReportCategory =
+  | 'Maintenance'
+  | 'Landscaping'
+  | 'Amenities'
+  | 'Safety'
+  | 'Noise'
+  | 'Parking'
+  | 'Rules Violation'
+  | 'Other';
+
+export type PostCategory = ReportCategory;
+
+export interface Report {
   id: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
+  communityId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
   title: string;
   description: string;
-  category: PostCategory;
+  category: ReportCategory;
   location: string;
-  status: PostStatus;
+  status: ReportStatus;
   createdAt: string;
   updatedAt: string;
   images?: string[];
   endorsements: number;
   comments: number;
   priority: 'low' | 'medium' | 'high';
+  mergedIntoId?: string;
   assignedLeaderId?: string;
+  statusHistory?: StatusHistoryItem[];
 }
 
-export interface CreatePostData {
+export interface StatusHistoryItem {
+  status: string;
+  date: string;
+  note: string;
+}
+
+export type Post = Report;
+
+export interface CreateReportData {
   title: string;
   description: string;
-  category: PostCategory;
+  category: ReportCategory;
   location: string;
   images?: string[];
 }
+export type CreatePostData = CreateReportData;
 
-export interface UpdatePostData {
+export interface UpdateReportData {
   title?: string;
   description?: string;
-  category?: PostCategory;
+  category?: ReportCategory;
   location?: string;
-  status?: PostStatus;
+  status?: ReportStatus;
   priority?: 'low' | 'medium' | 'high';
   assignedLeaderId?: string;
+  mergedIntoId?: string;
 }
+export type UpdatePostData = UpdateReportData;
 
 // ============================================================================
 // COMMENT TYPES
@@ -94,31 +167,49 @@ export interface UpdatePostData {
 
 export interface Comment {
   id: string;
-  postId: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
-  content: string;
+  reportId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  body: string;
   createdAt: string;
   likes: number;
+  // legacy aliases
+  postId?: string;
+  userId?: string;
+  userName?: string;
+  userAvatar?: string;
+  content?: string;
 }
 
 export interface CreateCommentData {
-  postId: string;
-  content: string;
+  reportId: string;
+  body: string;
+  postId?: string;
+  content?: string;
 }
 
 // ============================================================================
 // NOTIFICATION TYPES
 // ============================================================================
 
-export type NotificationType = 
+export type NotificationType =
+  | 'report_approved'
+  | 'report_rejected'
+  | 'report_endorsed'
+  | 'comment_added'
+  | 'status_changed'
+  | 'assigned_to_leader'
+  | 'resident_approved'
+  | 'resident_denied'
+  | 'system'
+  // legacy aliases
   | 'post_approved'
   | 'post_rejected'
   | 'post_endorsed'
-  | 'comment_added'
-  | 'status_changed'
-  | 'assigned_to_leader';
+  | 'status_update'
+  | 'endorsement'
+  | 'comment';
 
 export interface Notification {
   id: string;
@@ -126,9 +217,13 @@ export interface Notification {
   type: NotificationType;
   title: string;
   message: string;
+  reportId?: string;
   postId?: string;
   read: boolean;
   createdAt: string;
+  // legacy
+  date?: string;
+  relatedId?: string | null;
 }
 
 export interface MarkNotificationReadData {
@@ -136,7 +231,7 @@ export interface MarkNotificationReadData {
 }
 
 // ============================================================================
-// LEADER TYPES
+// LEADER TYPES (Board / Property Manager)
 // ============================================================================
 
 export interface Leader {
@@ -144,12 +239,13 @@ export interface Leader {
   name: string;
   title: string;
   department: string;
-  city: string;
+  communityId: string;
   email: string;
   phone: string;
   icon: string;
   avatarUrl?: string;
   bio?: string;
+  city?: string;
 }
 
 // ============================================================================
@@ -159,21 +255,21 @@ export interface Leader {
 export interface AIValidationRequest {
   title: string;
   description: string;
-  category: PostCategory;
+  category: ReportCategory;
 }
 
 export interface AIValidationResponse {
   isValid: boolean;
   confidence: number;
-  suggestedStatus: PostStatus;
+  suggestedStatus: ReportStatus;
   reasoning: string;
-  suggestedCategory?: PostCategory;
+  suggestedCategory?: ReportCategory;
   suggestedPriority?: 'low' | 'medium' | 'high';
 }
 
 export interface AIContentModerationRequest {
   content: string;
-  type: 'post' | 'comment';
+  type: 'report' | 'comment';
 }
 
 export interface AIContentModerationResponse {
@@ -189,13 +285,15 @@ export interface AIContentModerationResponse {
 
 export interface Endorsement {
   id: string;
-  postId: string;
+  reportId: string;
   userId: string;
   createdAt: string;
+  postId?: string;
 }
 
 export interface EndorsePostData {
-  postId: string;
+  reportId: string;
+  postId?: string;
 }
 
 // ============================================================================
@@ -204,8 +302,8 @@ export interface EndorsePostData {
 
 export interface SearchFilters {
   query?: string;
-  category?: PostCategory;
-  status?: PostStatus;
+  category?: ReportCategory;
+  status?: ReportStatus;
   location?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -226,8 +324,38 @@ export interface PaginatedResponse<T> {
 }
 
 // ============================================================================
-// CITY GOVERNMENT TYPES
+// HOA DASHBOARD / ANALYTICS TYPES
 // ============================================================================
+
+export interface CommunityStats {
+  totalReports: number;
+  pendingReview: number;
+  inProgress: number;
+  completed: number;
+  rejected: number;
+  avgResolutionDays: number;
+  residentSatisfaction: number;
+  duplicatesMerged: number;
+}
+
+export type CityGovStats = CommunityStats;
+
+export interface DashboardStats {
+  totalReports: number;
+  activeIssues: number;
+  resolvedIssues: number;
+  contributionScore: number;
+  recentActivity: ActivityItem[];
+}
+
+export interface ActivityItem {
+  id: string;
+  type: 'report_created' | 'report_endorsed' | 'comment_added' | 'status_changed' | 'post_created' | 'post_endorsed';
+  title: string;
+  timestamp: string;
+  reportId?: string;
+  postId?: string;
+}
 
 export interface CityGovUser {
   id: string;
@@ -237,40 +365,11 @@ export interface CityGovUser {
   accessLevel: 'read' | 'write' | 'admin';
 }
 
-export interface CityGovStats {
-  totalPosts: number;
-  pendingReview: number;
-  approved: number;
-  rejected: number;
-  avgResponseTime: number;
-  citizenSatisfaction: number;
-}
-
-// ============================================================================
-// ANALYTICS TYPES
-// ============================================================================
-
-export interface DashboardStats {
-  totalPosts: number;
-  activeIssues: number;
-  resolvedIssues: number;
-  contributionScore: number;
-  recentActivity: ActivityItem[];
-}
-
-export interface ActivityItem {
-  id: string;
-  type: 'post_created' | 'post_endorsed' | 'comment_added' | 'status_changed';
-  title: string;
-  timestamp: string;
-  postId?: string;
-}
-
 // ============================================================================
 // API RESPONSE TYPES
 // ============================================================================
 
-export interface APIResponse<T = any> {
+export interface APIResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -280,5 +379,5 @@ export interface APIResponse<T = any> {
 export interface APIError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }

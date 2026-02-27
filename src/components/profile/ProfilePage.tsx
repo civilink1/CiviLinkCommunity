@@ -25,10 +25,7 @@ export function ProfilePage({ currentUser, onLogout }: ProfilePageProps) {
   const [formData, setFormData] = useState({
     name: currentUser?.name || '',
     email: currentUser?.email || '',
-    city: currentUser?.city || '',
-    state: currentUser?.state || '',
-    address: currentUser?.address || '',
-    zipCode: currentUser?.zipCode || '',
+    unit: currentUser?.unit || '',
     bio: ''
   });
 
@@ -111,7 +108,7 @@ export function ProfilePage({ currentUser, onLogout }: ProfilePageProps) {
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#004080]/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-500"></div>
               <CardHeader className="relative pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Posts</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Reports</CardTitle>
                   <div className="h-10 w-10 rounded-lg bg-[#004080]/10 flex items-center justify-center">
                     <FileText className="h-5 w-5 text-[#004080]" />
                   </div>
@@ -193,35 +190,12 @@ export function ProfilePage({ currentUser, onLogout }: ProfilePageProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Address</Label>
+                    <Label>Unit / Lot #</Label>
                     <Input
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      value={formData.unit}
+                      placeholder="e.g., Unit 4B or Lot 12"
+                      onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                     />
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label>City</Label>
-                      <Input
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>State</Label>
-                      <Input
-                        value={formData.state}
-                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>ZIP Code</Label>
-                      <Input
-                        value={formData.zipCode}
-                        onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                      />
-                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -246,10 +220,12 @@ export function ProfilePage({ currentUser, onLogout }: ProfilePageProps) {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-muted-foreground p-3 bg-muted rounded-lg">
-                    <MapPin className="h-4 w-4 text-[#E31E24]" />
-                    {currentUser?.address}, {currentUser?.city}, {currentUser?.state} {currentUser?.zipCode}
-                  </div>
+                  {currentUser?.unit && (
+                    <div className="flex items-center gap-2 text-muted-foreground p-3 bg-muted rounded-lg">
+                      <MapPin className="h-4 w-4 text-[#E31E24]" />
+                      {currentUser.unit}
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-muted-foreground p-3 bg-muted rounded-lg">
                     <Calendar className="h-4 w-4" />
                     Member since {new Date(currentUser?.joinDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
@@ -268,7 +244,7 @@ export function ProfilePage({ currentUser, onLogout }: ProfilePageProps) {
             <CardContent>
               {userPosts.length === 0 ? (
                 <div className="py-8 text-center text-muted-foreground">
-                  No posts yet. Start contributing to your community!
+                  No reports yet. Start contributing to your community!
                 </div>
               ) : (
                 <div className="space-y-3">

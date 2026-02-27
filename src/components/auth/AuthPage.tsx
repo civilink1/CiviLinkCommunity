@@ -34,10 +34,7 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
     email: '',
     password: '',
     confirmPassword: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: ''
+    unit: ''
   });
 
   // Real-time validation for signup
@@ -80,10 +77,6 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
       signupData.email &&
       signupData.password.length >= 6 &&
       signupData.password === signupData.confirmPassword &&
-      signupData.address &&
-      signupData.city &&
-      signupData.state &&
-      signupData.zipCode &&
       !validationErrors.password &&
       !validationErrors.confirmPassword
     );
@@ -150,13 +143,12 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
       email: signupData.email,
       password: signupData.password,
       name: signupData.name,
-      role: 'user',
-      city: signupData.city,
-      state: signupData.state,
-      address: signupData.address,
-      zipCode: signupData.zipCode,
-      joinedDate: new Date().toISOString().split('T')[0],
-      points: 0,
+      role: 'RESIDENT' as const,
+      communityId: 'comm-1',
+      approvalStatus: 'APPROVED' as const,
+      unit: signupData.unit || undefined,
+      joinDate: new Date().toISOString().split('T')[0],
+      contributionScore: 0,
       badges: []
     };
 
@@ -169,9 +161,9 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
   };
 
   const benefits = [
-    'Report civic issues instantly',
-    'Track progress in real-time',
-    'Connect with local leaders',
+    'Report neighborhood issues instantly',
+    'Track resolutions in real-time',
+    'Connect with your HOA board',
     'Earn contribution points'
   ];
 
@@ -254,12 +246,12 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
                   Welcome to
                   <br />
                   <span className="bg-gradient-to-r from-primary via-blue-600 to-purple-600 bg-clip-text text-transparent">
-                    CiviLink
+                    CiviLink Community
                   </span>
                 </h1>
 
                 <p className="text-xl text-muted-foreground mb-8">
-                  Your voice matters. Connect with your community and drive real change.
+                  Your voice matters. Connect with your neighborhood and keep it running smoothly.
                 </p>
               </div>
 
@@ -268,7 +260,7 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-primary" />
-                    Why Join CiviLink?
+                    Why Join CiviLink Community?
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -440,48 +432,12 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
                           )}
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="address">Address</Label>
+                          <Label htmlFor="unit">Unit / Lot # (optional)</Label>
                           <Input
-                            id="address"
-                            placeholder="Street address"
-                            value={signupData.address}
-                            onChange={(e) => setSignupData({ ...signupData, address: e.target.value })}
-                            required
-                            className="h-11"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="city">City</Label>
-                            <Input
-                              id="city"
-                              placeholder="City"
-                              value={signupData.city}
-                              onChange={(e) => setSignupData({ ...signupData, city: e.target.value })}
-                              required
-                              className="h-11"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="state">State</Label>
-                            <Input
-                              id="state"
-                              placeholder="State"
-                              value={signupData.state}
-                              onChange={(e) => setSignupData({ ...signupData, state: e.target.value })}
-                              required
-                              className="h-11"
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="zipCode">ZIP Code</Label>
-                          <Input
-                            id="zipCode"
-                            placeholder="ZIP Code"
-                            value={signupData.zipCode}
-                            onChange={(e) => setSignupData({ ...signupData, zipCode: e.target.value })}
-                            required
+                            id="unit"
+                            placeholder="e.g., Unit 4B or Lot 12"
+                            value={signupData.unit}
+                            onChange={(e) => setSignupData({ ...signupData, unit: e.target.value })}
                             className="h-11"
                           />
                         </div>

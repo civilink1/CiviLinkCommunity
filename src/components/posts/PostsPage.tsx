@@ -54,10 +54,10 @@ export function PostsPage({ currentUser, onLogout }: PostsPageProps) {
                 <span className="text-white/80 text-sm tracking-wider uppercase">Your Contributions</span>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl mb-4 text-white">
-                My Posts
+                My Reports
               </h1>
               <p className="text-lg md:text-xl text-white/70 max-w-2xl">
-                Manage and track your civic issue reports
+                Manage and track your neighborhood issue reports
               </p>
             </div>
           </div>
@@ -122,8 +122,8 @@ export function PostsPage({ currentUser, onLogout }: PostsPageProps) {
           <div>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl mb-1">Your Posts</h2>
-                <p className="text-sm text-muted-foreground">All your civic issue reports</p>
+                <h2 className="text-2xl mb-1">Your Reports</h2>
+                <p className="text-sm text-muted-foreground">All your neighborhood issue reports</p>
               </div>
             </div>
 

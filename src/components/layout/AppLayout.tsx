@@ -16,15 +16,15 @@ export function AppLayout({ children, currentUser, onLogout }: AppLayoutProps) {
 
   const navItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
-    { path: '/posts', icon: FileText, label: 'My Posts' },
-    { path: '/posts/create', icon: PlusCircle, label: 'Create Post' },
+    { path: '/posts', icon: FileText, label: 'My Reports' },
+    { path: '/posts/create', icon: PlusCircle, label: 'New Report' },
     { path: '/notifications', icon: Bell, label: 'Notifications' },
-    { path: '/leaders', icon: Users, label: 'Leaders' },
+    { path: '/leaders', icon: Users, label: 'Board' },
     { path: '/search', icon: Search, label: 'Search' },
     { path: '/profile', icon: User, label: 'Profile' },
   ];
 
-  if (currentUser?.role === 'admin') {
+  if (currentUser?.role === 'HOA_ADMIN') {
     navItems.push({ path: '/admin', icon: Shield, label: 'Admin' });
   }
 
@@ -37,14 +37,14 @@ export function AppLayout({ children, currentUser, onLogout }: AppLayoutProps) {
             <div className="w-10 h-10 flex items-center justify-center">
               <img src={logo} alt="CiviLink Logo" className="w-full h-full" />
             </div>
-            <span className="text-xl font-normal">CiviLink</span>
+            <span className="text-xl font-normal">CiviLink Community</span>
           </Link>
 
           <div className="flex items-center space-x-4 mr-4">
             <div className="hidden md:flex items-center space-x-2 text-sm">
               <span className="text-muted-foreground">Welcome,</span>
               <span>{currentUser?.name}</span>
-              {currentUser?.role === 'admin' && (
+              {currentUser?.role === 'HOA_ADMIN' && (
                 <Badge variant="secondary">Admin</Badge>
               )}
             </div>

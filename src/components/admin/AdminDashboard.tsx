@@ -33,14 +33,14 @@ export function AdminDashboard({ currentUser, onLogout }: AdminDashboardProps) {
       return {
         recommendation: 'reject',
         confidence: 0.85,
-        reasoning: 'Content appears to be spam or advertisement. Does not relate to civic issues.'
+        reasoning: 'Content appears to be spam or off-topic. Does not relate to neighborhood issues.'
       };
     }
 
     return {
       recommendation: 'approve',
       confidence: 0.92,
-      reasoning: 'Content appears to be a legitimate civic issue. Addresses infrastructure/public service concerns with specific location and details.'
+      reasoning: 'Content appears to be a legitimate neighborhood issue. Addresses community maintenance or shared-space concerns with specific details.'
     };
   };
 
@@ -48,14 +48,14 @@ export function AdminDashboard({ currentUser, onLogout }: AdminDashboardProps) {
     setPosts(posts.map(p => 
       p.id === postId ? { ...p, status: 'approved' } : p
     ));
-    toast.success('Post approved successfully');
+    toast.success('Report approved successfully');
   };
 
   const handleReject = (postId: string, reason: string) => {
     setPosts(posts.map(p => 
       p.id === postId ? { ...p, status: 'rejected' } : p
     ));
-    toast.success('Post rejected');
+    toast.success('Report rejected');
     setRejectionReason('');
     setSelectedPost(null);
   };
@@ -64,14 +64,14 @@ export function AdminDashboard({ currentUser, onLogout }: AdminDashboardProps) {
     setPosts(posts.map(p => 
       p.id === postId ? { ...p, status: newStatus } : p
     ));
-    toast.success('Post status updated');
+    toast.success('Report status updated');
   };
 
   const handleToggleUserStatus = (userId: string) => {
     setUsers(users.map(u =>
       u.id === userId ? { ...u, isActive: !u.isActive } : u
     ));
-    toast.success('User status updated');
+    toast.success('Resident status updated');
   };
 
   return (
@@ -85,7 +85,7 @@ export function AdminDashboard({ currentUser, onLogout }: AdminDashboardProps) {
           <div>
             <h1 className="text-3xl">Admin Dashboard</h1>
             <p className="text-muted-foreground">
-              Manage posts, users, and platform content
+              Manage reports, residents, and community content
             </p>
           </div>
         </div>
@@ -94,7 +94,7 @@ export function AdminDashboard({ currentUser, onLogout }: AdminDashboardProps) {
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm">Total Posts</CardTitle>
+              <CardTitle className="text-sm">Total Reports</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -114,7 +114,7 @@ export function AdminDashboard({ currentUser, onLogout }: AdminDashboardProps) {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm">Total Users</CardTitle>
+              <CardTitle className="text-sm">Total Residents</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -137,13 +137,13 @@ export function AdminDashboard({ currentUser, onLogout }: AdminDashboardProps) {
         <Tabs defaultValue="pending" className="space-y-4">
           <TabsList>
             <TabsTrigger value="pending">
-              📋 Pending Posts ({underReviewPosts.length})
+              📋 Pending Reports ({underReviewPosts.length})
             </TabsTrigger>
             <TabsTrigger value="all">
-              📊 All Posts
+              📊 All Reports
             </TabsTrigger>
             <TabsTrigger value="users">
-              👥 Users
+              👥 Residents
             </TabsTrigger>
           </TabsList>
 
@@ -153,7 +153,7 @@ export function AdminDashboard({ currentUser, onLogout }: AdminDashboardProps) {
               <Card>
                 <CardContent className="py-12 text-center">
                   <CheckCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">No pending posts to review</p>
+                  <p className="text-muted-foreground">No pending reports to review</p>
                 </CardContent>
               </Card>
             ) : (
@@ -235,9 +235,9 @@ export function AdminDashboard({ currentUser, onLogout }: AdminDashboardProps) {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Reject Post</AlertDialogTitle>
+                                <AlertDialogTitle>Reject Report</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Please provide a reason for rejecting this post.
+                                  Please provide a reason for rejecting this report.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <div className="space-y-2">
@@ -258,7 +258,7 @@ export function AdminDashboard({ currentUser, onLogout }: AdminDashboardProps) {
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   disabled={!rejectionReason}
                                 >
-                                  Reject Post
+                                  Reject Report
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>

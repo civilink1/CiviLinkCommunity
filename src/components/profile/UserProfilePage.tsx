@@ -47,7 +47,7 @@ export function UserProfilePage({ currentUser, onLogout }: UserProfilePageProps)
         <div className="container mx-auto px-4 py-8">
           <Card className="border-2">
             <CardContent className="py-16 text-center">
-              <h2 className="text-2xl mb-4">User not found</h2>
+              <h2 className="text-2xl mb-4">Resident not found</h2>
               <Button onClick={() => navigate('/dashboard')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
@@ -133,7 +133,7 @@ export function UserProfilePage({ currentUser, onLogout }: UserProfilePageProps)
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#004080]/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-500"></div>
               <CardHeader className="relative pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Posts</CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Reports</CardTitle>
                   <div className="h-10 w-10 rounded-lg bg-[#004080]/10 flex items-center justify-center">
                     <FileText className="h-5 w-5 text-[#004080]" />
                   </div>
@@ -183,13 +183,13 @@ export function UserProfilePage({ currentUser, onLogout }: UserProfilePageProps)
           {/* User's Posts */}
           <Card className="border-2">
             <CardHeader>
-              <CardTitle>Recent Posts</CardTitle>
+              <CardTitle>Recent Reports</CardTitle>
               <CardDescription>Issues reported by {user.name}</CardDescription>
             </CardHeader>
             <CardContent>
               {userPosts.length === 0 ? (
                 <div className="py-8 text-center text-muted-foreground">
-                  No posts yet
+                  No reports yet
                 </div>
               ) : (
                 <div className="space-y-3">

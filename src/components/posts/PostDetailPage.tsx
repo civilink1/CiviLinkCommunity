@@ -38,14 +38,14 @@ export function PostDetailPage({ currentUser, onLogout }: PostDetailPageProps) {
   // TODO: Replace with API call - GET /api/users/:userId
   const author = mockUsers.find(u => u.id === post?.authorId);
 
-  // Mock comments - TODO: Replace with API call - GET /api/posts/:postId/comments
+  // Mock comments
   const [comments] = useState([
     {
       id: '1',
       postId: postId,
       authorId: '2',
       authorName: 'Jane Smith',
-      text: 'Thanks for reporting this! I drive by here every day and it\'s been getting worse.',
+      text: 'Thanks for reporting this! I noticed the same issue near my unit last week.',
       createdAt: '2024-01-05T14:30:00',
     },
     {
@@ -53,7 +53,7 @@ export function PostDetailPage({ currentUser, onLogout }: PostDetailPageProps) {
       postId: postId,
       authorId: '3',
       authorName: 'Mike Johnson',
-      text: 'I contacted the city about this last week. They said it\'s on their priority list.',
+      text: 'The board mentioned this at the last meeting. It should be addressed soon.',
       createdAt: '2024-01-05T16:45:00',
     }
   ]);
@@ -64,7 +64,7 @@ export function PostDetailPage({ currentUser, onLogout }: PostDetailPageProps) {
         <div className="container mx-auto px-4 py-8">
           <Card className="border-2">
             <CardContent className="py-16 text-center">
-              <h2 className="text-2xl mb-4">Post not found</h2>
+              <h2 className="text-2xl mb-4">Report not found</h2>
               <Button onClick={() => navigate('/dashboard')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard

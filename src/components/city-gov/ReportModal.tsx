@@ -51,10 +51,10 @@ export function ReportModal({ isOpen, onClose, cityName, aiPredictions, stats, r
             </h3>
             <div className="p-4 rounded-lg bg-purple-50">
               <p className="text-sm text-gray-700 leading-relaxed">
-                This AI-powered report analyzes {reportData.totalIssues} civic issues reported in {cityName}. 
+                This AI-powered report analyzes {reportData.totalIssues} neighborhood issues reported in {cityName}. 
                 Our predictive models indicate a {reportData.trendDirection} in overall issue volume, with 
-                Infrastructure showing the highest predicted increase. Total community engagement stands at{' '}
-                {reportData.totalEndorsements} endorsements, demonstrating strong civic participation.
+                Maintenance showing the highest predicted increase. Total community engagement stands at{' '}
+                {reportData.totalEndorsements} endorsements, demonstrating strong resident participation.
               </p>
             </div>
           </div>

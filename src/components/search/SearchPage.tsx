@@ -69,7 +69,7 @@ export function SearchPage({ currentUser, onLogout }: SearchPageProps) {
                 Search
               </h1>
               <p className="text-lg md:text-xl text-white/70 max-w-2xl">
-                Find posts and users across the platform
+                Find reports and residents in your community
               </p>
             </div>
           </div>
@@ -84,8 +84,8 @@ export function SearchPage({ currentUser, onLogout }: SearchPageProps) {
                   <Search className="h-5 w-5 text-[#004080]" />
                 </div>
                 <div>
-                  <CardTitle>Search CiviLink</CardTitle>
-                  <CardDescription>Find posts, users, and locations</CardDescription>
+                  <CardTitle>Search Community</CardTitle>
+                  <CardDescription>Find reports, residents, and locations</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -93,7 +93,7 @@ export function SearchPage({ currentUser, onLogout }: SearchPageProps) {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
-                  placeholder="Search for posts, users, locations..."
+                  placeholder="Search for reports, residents, locations..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 text-lg h-12"
@@ -109,7 +109,7 @@ export function SearchPage({ currentUser, onLogout }: SearchPageProps) {
                     className={searchType === 'posts' ? 'bg-[#004080] hover:bg-[#003366]' : ''}
                   >
                     <FileText className="h-4 w-4 mr-2" />
-                    Posts
+                    Reports
                   </Button>
                   <Button
                     variant={searchType === 'users' ? 'default' : 'outline'}
@@ -118,7 +118,7 @@ export function SearchPage({ currentUser, onLogout }: SearchPageProps) {
                     className={searchType === 'users' ? 'bg-[#004080] hover:bg-[#003366]' : ''}
                   >
                     <User className="h-4 w-4 mr-2" />
-                    Users
+                    Residents
                   </Button>
                 </div>
 
@@ -148,7 +148,7 @@ export function SearchPage({ currentUser, onLogout }: SearchPageProps) {
                     <Search className="h-8 w-8 text-muted-foreground" />
                   </div>
                   <h3 className="text-lg mb-2">Start typing to search</h3>
-                  <p className="text-muted-foreground">Search for posts, users, or locations</p>
+                  <p className="text-muted-foreground">Search for reports, residents, or locations</p>
                 </CardContent>
               </Card>
             ) : results.length === 0 ? (
@@ -165,7 +165,7 @@ export function SearchPage({ currentUser, onLogout }: SearchPageProps) {
               <div>
                 <div className="mb-6">
                   <h2 className="text-2xl mb-1">
-                    {results.length} {searchType === 'posts' ? 'Post' : 'User'}{results.length !== 1 ? 's' : ''} Found
+                    {results.length} {searchType === 'posts' ? 'Report' : 'Resident'}{results.length !== 1 ? 's' : ''} Found
                   </h2>
                   <p className="text-sm text-muted-foreground">Showing search results for "{searchQuery}"</p>
                 </div>

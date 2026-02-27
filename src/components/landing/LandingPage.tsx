@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { MapPin, Users, ThumbsUp, TrendingUp, Shield, Sparkles, Building2, ArrowRight, Zap, MessageSquare, Bell } from 'lucide-react';
+import { MapPin, Users, ThumbsUp, TrendingUp, Shield, Sparkles, Building2, ArrowRight, Zap, MessageSquare, Bell, Home, UserPlus } from 'lucide-react';
 import logo from '../../assets/logo.png';
 
 interface LandingPageProps {
@@ -17,34 +17,34 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
     {
       icon: MapPin,
       title: 'Report Issues',
-      description: 'Easily report civic issues in your community with AI-powered verification',
+      description: 'Flag maintenance requests, rule violations, and safety concerns in your neighborhood',
       color: 'from-blue-500 to-cyan-500'
     },
     {
       icon: ThumbsUp,
       title: 'Endorse & Track',
-      description: 'Support issues that matter to you and track their progress in real-time',
+      description: 'Support issues that matter and track their resolution in real-time',
       color: 'from-purple-500 to-pink-500'
     },
     {
       icon: Users,
-      title: 'Connect with Leaders',
-      description: 'Direct communication channel with local government officials',
+      title: 'Connect with the Board',
+      description: 'Direct communication channel with your HOA board and property managers',
       color: 'from-orange-500 to-red-500'
     },
     {
       icon: TrendingUp,
       title: 'Make an Impact',
-      description: 'See your contributions drive real change in your community',
+      description: 'See your contributions drive real improvements in your neighborhood',
       color: 'from-green-500 to-emerald-500'
     }
   ];
 
   const benefits = [
-    { icon: Zap, text: 'AI-powered issue verification' },
+    { icon: Zap, text: 'AI-powered content moderation' },
     { icon: Bell, text: 'Real-time progress notifications' },
-    { icon: MessageSquare, text: 'Direct government communication' },
-    { icon: Shield, text: 'Verified and secure platform' }
+    { icon: MessageSquare, text: 'Direct board communication' },
+    { icon: Shield, text: 'Invite-only secure community' }
   ];
 
   return (
@@ -152,8 +152,8 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
                 onClick={onCityGovAuth} 
                 className="gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm"
               >
-                <Building2 className="h-4 w-4" />
-                City Portal
+                <Home className="h-4 w-4" />
+                HOA Admin
               </Button>
             </div>
           </div>
@@ -176,8 +176,8 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
               </h1>
               
               <p className="text-xl text-slate-300 leading-relaxed">
-                CiviLink bridges the gap between citizens and local government. 
-                Report issues, track progress, and drive real change in your community.
+                CiviLink Community bridges the gap between residents and their HOA board. 
+                Report issues, track resolutions, and keep your neighborhood running smoothly.
               </p>
 
               {/* Benefits List */}
@@ -225,8 +225,8 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
                     onClick={onCityGovAuth}
                     className="text-lg px-8 py-6 bg-white/5 hover:bg-white/10 text-white border-white/20 backdrop-blur-sm"
                   >
-                    <Building2 className="mr-2 h-5 w-5" />
-                    For City Governments
+                    <Home className="mr-2 h-5 w-5" />
+                    For HOA Admins
                   </Button>
                 </motion.div>
               </div>
@@ -241,8 +241,8 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
             >
               <div className="relative h-full">
                 {[
-                  { title: 'Pothole on Main Street', location: 'Transportation • San Francisco', endorsements: 234, verified: true, color: 'from-blue-500 to-cyan-500', position: 'top' },
-                  { title: 'Park Maintenance Needed', location: 'Parks & Recreation • Berkeley', endorsements: 156, verified: true, color: 'from-purple-500 to-pink-500', position: 'bottom' }
+                  { title: 'Pool Heater Not Working', location: 'Amenities • Sunset Ridge HOA', endorsements: 18, verified: true, color: 'from-blue-500 to-cyan-500', position: 'top' },
+                  { title: 'Sprinkler Leak – Lot 42', location: 'Landscaping • Sunset Ridge HOA', endorsements: 12, verified: true, color: 'from-purple-500 to-pink-500', position: 'bottom' }
                 ].map((post, i) => (
                   <motion.div
                     key={i}
@@ -317,10 +317,10 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-5xl md:text-6xl mb-4 text-white">
-              How CiviLink Works
+              How CiviLink Community Works
             </h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              A powerful platform designed to amplify your voice and streamline civic engagement
+              A powerful platform designed to streamline HOA communication and neighborhood management
             </p>
           </motion.div>
 
@@ -373,7 +373,7 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
                     Ready to Make a Difference?
                   </h2>
                   <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
-                    Join thousands of engaged citizens using CiviLink to improve their communities
+                    Join hundreds of HOA communities using CiviLink to keep their neighborhoods running smoothly
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <motion.div
@@ -399,8 +399,8 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
                         onClick={onCityGovAuth}
                         className="text-lg px-10 py-7 bg-white/5 hover:bg-white/10 text-white border-white/20 backdrop-blur-sm"
                       >
-                        <Building2 className="mr-2 h-5 w-5" />
-                        City Government Portal
+                        <Home className="mr-2 h-5 w-5" />
+                        HOA Admin Portal
                       </Button>
                     </motion.div>
                   </div>
@@ -418,7 +418,7 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
               CiviLink
             </span>
           </div>
-          <p>&copy; 2024 CiviLink. Empowering communities through technology.</p>
+          <p>&copy; 2024 CiviLink Community. Empowering neighborhoods through technology.</p>
         </footer>
       </div>
     </div>

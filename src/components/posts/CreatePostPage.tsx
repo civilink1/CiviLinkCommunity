@@ -47,16 +47,19 @@ export function CreatePostPage({ currentUser, onLogout }: CreatePostPageProps) {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     const generatedDescriptions: Record<string, string> = {
-      'Infrastructure': `This ${formData.title.toLowerCase()} represents a critical infrastructure issue that requires immediate attention. The affected area poses potential safety risks to residents and impacts daily community activities. Proper assessment and repair by the ${formData.category} department would significantly improve public safety and quality of life in ${formData.city}.`,
-      'Transportation': `The transportation issue of ${formData.title.toLowerCase()} is affecting commuters and residents in the ${formData.location || 'area'}. This matter requires coordination with the Transportation Department to ensure safe and efficient mobility. Addressing this concern would enhance the overall transportation infrastructure and improve daily commutes for citizens.`,
-      'Parks': `This parks and recreation matter concerning ${formData.title.toLowerCase()} impacts community wellness and outdoor activities. The Parks Department should evaluate and address this issue to maintain our community's recreational spaces. Improvements would benefit families, children, and all residents who utilize these public spaces.`,
-      'Public Safety': `The public safety concern regarding ${formData.title.toLowerCase()} requires urgent attention from local authorities. This issue affects the security and well-being of residents in ${formData.city}. Swift action by the Public Safety Department would help ensure a secure environment for all community members.`,
-      'Education': `This educational facility issue of ${formData.title.toLowerCase()} impacts students, teachers, and families in our community. The Education Department should prioritize addressing this concern to maintain a safe and productive learning environment. Resolving this matter would contribute to better educational outcomes for our children.`,
-      'Health': `The public health matter of ${formData.title.toLowerCase()} affects community wellness and requires attention from health officials. This issue impacts residents' access to health services and overall well-being in ${formData.city}. Proper resolution would enhance public health infrastructure and services.`
+      'Maintenance': `This maintenance issue regarding ${formData.title.toLowerCase()} needs attention from the HOA maintenance team. The affected area impacts resident comfort and property value. Prompt repair would benefit all community members.`,
+      'Landscaping': `The landscaping concern of ${formData.title.toLowerCase()} affects the appearance and property values within the community. The landscaping committee should evaluate this to maintain our neighborhood standards.`,
+      'Amenities': `This amenity issue concerning ${formData.title.toLowerCase()} impacts resident access to shared facilities. Prompt resolution would ensure all homeowners can enjoy the community amenities they help fund.`,
+      'Safety': `The safety concern regarding ${formData.title.toLowerCase()} requires urgent attention. This issue affects the security and well-being of residents. Swift action would help ensure a safe environment for all community members.`,
+      'Noise': `This noise complaint about ${formData.title.toLowerCase()} is affecting residents' quality of life. The HOA board should address this per community noise guidelines to maintain peaceful living conditions.`,
+      'Parking': `The parking issue of ${formData.title.toLowerCase()} is impacting residents and visitors. This matter should be resolved in accordance with the community parking policy.`,
+      'Rules Violation': `This potential rules violation regarding ${formData.title.toLowerCase()} needs board review. Consistent enforcement of community guidelines helps maintain property values and neighborhood harmony.`,
+      'Other': `This issue regarding ${formData.title.toLowerCase()} has been reported for board review. Addressing this matter would improve community satisfaction and quality of life for residents.`
     };
 
     const description = generatedDescriptions[formData.category] || 
-      `This civic issue regarding ${formData.title.toLowerCase()} requires attention from the appropriate city department. Addressing this matter would improve community services and quality of life for residents in ${formData.city}.`;
+      `This neighborhood issue regarding ${formData.title.toLowerCase()} requires attention from the HOA board. Addressing this matter would improve community services and quality of life for residents.`;
+
 
     setFormData({ ...formData, description });
     setIsGenerating(false);
@@ -83,11 +86,11 @@ export function CreatePostPage({ currentUser, onLogout }: CreatePostPageProps) {
       isLegitimate,
       confidence: isLegitimate ? 0.92 : 0.15,
       reasoning: isLegitimate 
-        ? 'This appears to be a legitimate civic issue. The content is relevant to community infrastructure and public services. The description provides specific details about location and impact.'
-        : 'This content may not be a legitimate civic issue. Please ensure your post relates to actual community infrastructure, safety, or public service concerns.',
+        ? 'This appears to be a legitimate neighborhood issue. The content is relevant to community maintenance and shared spaces.'
+        : 'This content may not be a legitimate neighborhood issue. Please ensure your report relates to actual HOA or community concerns.',
       suggestions: isLegitimate
-        ? ['Consider adding specific location details', 'Include timeframe for when the issue started', 'Add any relevant images if available']
-        : ['Focus on genuine civic issues', 'Avoid promotional content', 'Ensure the issue affects the community']
+        ? ['Consider adding the specific location within the community', 'Include when the issue was first noticed', 'Add photos if possible']
+        : ['Focus on genuine neighborhood concerns', 'Avoid promotional content', 'Ensure the issue affects the community']
     };
 
     setVerificationResult(result);
@@ -109,9 +112,9 @@ export function CreatePostPage({ currentUser, onLogout }: CreatePostPageProps) {
     let newDescription = formData.description;
 
     if (editPrompt.toLowerCase().includes('formal')) {
-      newDescription = `Subject: ${formData.title}\n\nDear City Officials,\n\nI am writing to bring to your attention a matter of civic concern. ${formData.description}\n\nThis issue requires prompt evaluation and resolution to ensure the continued safety and well-being of our community members.\n\nThank you for your attention to this matter.\n\nRespectfully,\n${currentUser.name}`;
+      newDescription = `Subject: ${formData.title}\n\nDear HOA Board,\n\nI am writing to bring to your attention a neighborhood concern. ${formData.description}\n\nThis issue requires prompt evaluation and resolution to ensure the continued comfort and safety of our community members.\n\nThank you for your attention to this matter.\n\nRespectfully,\n${currentUser.name}`;
     } else if (editPrompt.toLowerCase().includes('detail')) {
-      newDescription = `${formData.description}\n\nAdditional Context:\n- Issue first observed: Recently\n- Affected population: Local residents and commuters\n- Impact severity: Moderate to High\n- Suggested timeline for resolution: Within 30 days\n- Related city services: ${formData.category} Department`;
+      newDescription = `${formData.description}\n\nAdditional Context:\n- Issue first observed: Recently\n- Affected residents: Nearby homeowners\n- Impact severity: Moderate to High\n- Suggested timeline for resolution: Within 30 days\n- Related area: ${formData.category}`;
     } else if (editPrompt.toLowerCase().includes('brief') || editPrompt.toLowerCase().includes('short')) {
       const sentences = formData.description.split('. ');
       newDescription = sentences.slice(0, 2).join('. ') + '.';
@@ -137,38 +140,41 @@ export function CreatePostPage({ currentUser, onLogout }: CreatePostPageProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.description || !formData.category || !formData.city || !formData.location) {
+    if (!formData.title || !formData.description || !formData.category || !formData.location) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    // Simulate AI verification - posts are either approved or rejected
-    const isLegitPost = Math.random() > 0.2; // 80% chance of being approved, 20% rejected
-    const aiStatus = isLegitPost ? 'approved' : 'rejected';
+    // Simulate AI content moderation
+    const isLegitPost = Math.random() > 0.2; // 80% pass moderation
+    const aiStatus = isLegitPost ? 'pending' : 'rejected';
 
-    // Create new post
+    // Create new report
     const newPost = {
       id: String(mockPosts.length + 1),
       title: formData.title,
       description: formData.description,
       category: formData.category,
-      city: formData.city,
+      city: formData.city || 'Sunset Ridge',
       location: formData.location,
       authorId: currentUser.id,
       authorName: currentUser.name,
+      author: currentUser.name,
       status: aiStatus,
       endorsements: 0,
+      comments: 0,
       commentsCount: 0,
+      date: new Date().toISOString().split('T')[0],
       createdAt: new Date().toISOString().split('T')[0],
       images: []
     };
 
     mockPosts.push(newPost);
     
-    if (aiStatus === 'approved') {
-      toast.success('✓ Post created! AI verified it as legitimate and published to community.');
+    if (aiStatus !== 'rejected') {
+      toast.success('Report submitted! It will be reviewed by the board.');
     } else {
-      toast.error('✗ Post not published. AI flagged it as potentially spam or inappropriate.');
+      toast.error('Report not published. AI flagged it as potentially spam or off-topic.');
     }
     
     navigate('/posts');
@@ -187,10 +193,10 @@ export function CreatePostPage({ currentUser, onLogout }: CreatePostPageProps) {
                 <span className="text-white/80 text-sm tracking-wider uppercase">Report an Issue</span>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl mb-4 text-white">
-                Create New Post
+                New Report
               </h1>
               <p className="text-lg md:text-xl text-white/70 max-w-2xl">
-                Report a civic issue with AI-powered assistance
+                Report a neighborhood issue with AI-powered assistance
               </p>
             </div>
           </div>
@@ -213,7 +219,7 @@ export function CreatePostPage({ currentUser, onLogout }: CreatePostPageProps) {
               </CardHeader>
               <CardContent>
                 <Input
-                  placeholder="e.g., Pothole on Main Street needs repair"
+                  placeholder="e.g., Pool heater not working, Sprinkler leak near Lot 42"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
@@ -373,7 +379,7 @@ export function CreatePostPage({ currentUser, onLogout }: CreatePostPageProps) {
                 <div>
                   <Label>Specific Location</Label>
                   <Input
-                    placeholder="e.g., Main Street & 5th Avenue"
+                    placeholder="e.g., Near clubhouse, Pool area, Lot 42"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     required
@@ -426,7 +432,7 @@ export function CreatePostPage({ currentUser, onLogout }: CreatePostPageProps) {
                 className="w-full bg-[#004080] hover:bg-[#003366] text-white border-0 transition-all duration-200 hover:shadow-lg hover:shadow-[#004080]/30"
               >
                 <PlusCircle className="h-4 w-4 mr-2" />
-                Submit Post
+                Submit Report
               </Button>
             </div>
           </form>

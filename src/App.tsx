@@ -2,7 +2,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useState, useEffect } from 'react';
 import { LandingPage } from './components/landing/LandingPage';
 import { AuthPage } from './components/auth/AuthPage';
-import { CityGovAuth } from './components/city-gov/CityGovAuth';
+import { OnboardingPage } from './components/community/OnboardingPage';
+import { BillingPage } from './components/community/BillingPage';
+import { InvitePage } from './components/community/InvitePage';
+import { JoinPage } from './components/community/JoinPage';
+import { PendingApprovalPage } from './components/community/PendingApprovalPage';
 import { CityGovDashboard } from './components/city-gov/CityGovDashboard';
 import { Dashboard } from './components/dashboard/Dashboard';
 import { PostsPage } from './components/posts/PostsPage';
@@ -18,169 +22,229 @@ import { Toaster } from './components/ui/sonner';
 import type { User } from './types';
 
 /**
- * CiviLink Main Application Component
- * 
- * This is the root component that handles:
- * - User authentication state
- * - City government authentication
- * - Routing between different pages
- * - Session persistence
- * 
- * GitHub Copilot: When adding backend integration:
- * 1. Replace localStorage auth with JWT tokens from /services/auth.service.ts
- * 2. Add token refresh logic
- * 3. Implement proper session management
+ * CiviLink Community – Main Application Component
+ *
+ * Handles:
+ * - Resident authentication (invite code → register → login)
+ * - HOA admin onboarding (plan → billing → invite code → dashboard)
+ * - Routing between all pages
+ * - Session persistence via localStorage
  */
 export default function App() {
-  // Authentication state
+  // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isCityGov, setIsCityGov] = useState(false);
-  const [cityName, setCityName] = useState('');
+  const [isHoaAdmin, setIsHoaAdmin] = useState(false);
+  const [communityName, setCommunityName] = useState('');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showLanding, setShowLanding] = useState(true);
-  const [showCityGovAuth, setShowCityGovAuth] = useState(false);
 
-  /**
-   * Initialize app - Check for existing session
-   * TODO: Replace localStorage checks with proper JWT validation
-   */
+  // View state (screens rendered outside Router)
+  const [view, setView] = useState<
+    'landing' | 'auth' | 'join' | 'pending'
+    | 'onboarding' | 'billing' | 'invite'
+    | 'hoa-dashboard' | 'app'
+  >('landing');
+  const [selectedPlan, setSelectedPlan] = useState('standard');
+
+  // Restore session
   useEffect(() => {
-    // Check localStorage for auth
     const user = localStorage.getItem('currentUser');
-    const cityGov = localStorage.getItem('cityGov');
-    const savedCityName = localStorage.getItem('cityName');
-    
+    const hoaFlag = localStorage.getItem('hoaAdmin');
+    const savedCommunity = localStorage.getItem('communityName');
+
     if (user) {
-      setCurrentUser(JSON.parse(user));
+      const parsed: User = JSON.parse(user);
+      setCurrentUser(parsed);
       setIsAuthenticated(true);
-      setShowLanding(false);
-    } else if (cityGov && savedCityName) {
-      setIsCityGov(true);
-      setCityName(savedCityName);
-      setShowLanding(false);
+      if (parsed.role === 'HOA_ADMIN' || parsed.role === 'HOA_MODERATOR') {
+        setIsHoaAdmin(true);
+        setCommunityName(savedCommunity || parsed.city || '');
+        setView('hoa-dashboard');
+      } else {
+        setView('app');
+      }
+    } else if (hoaFlag && savedCommunity) {
+      setIsHoaAdmin(true);
+      setCommunityName(savedCommunity);
+      setView('hoa-dashboard');
+    } else {
+      setView('landing');
     }
     setIsLoading(false);
   }, []);
 
-  /**
-   * Handle user login
-   * TODO: Update to use authService.login() from /services/auth.service.ts
-   */
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
   const handleLogin = (user: User) => {
     setCurrentUser(user);
     setIsAuthenticated(true);
-    setShowLanding(false);
     localStorage.setItem('currentUser', JSON.stringify(user));
+
+    if (user.role === 'HOA_ADMIN' || user.role === 'HOA_MODERATOR') {
+      setIsHoaAdmin(true);
+      setCommunityName(user.city || '');
+      localStorage.setItem('hoaAdmin', 'true');
+      localStorage.setItem('communityName', user.city || '');
+      setView('hoa-dashboard');
+    } else {
+      setView('app');
+    }
   };
 
-  /**
-   * Handle city government login
-   * TODO: Update to use proper city gov authentication
-   */
-  const handleCityGovLogin = (city: string) => {
-    setIsCityGov(true);
-    setCityName(city);
-    setShowLanding(false);
-    setShowCityGovAuth(false);
-    localStorage.setItem('cityGov', 'true');
-    localStorage.setItem('cityName', city);
+  const handleHoaOnboardingComplete = (name: string, plan: string) => {
+    setCommunityName(name);
+    setSelectedPlan(plan);
+    setView('billing');
   };
 
-  /**
-   * Handle logout
-   * TODO: Update to use authService.logout() to properly clear JWT tokens
-   */
+  const handleBillingComplete = () => {
+    setView('invite');
+  };
+
+  const handleInviteContinue = () => {
+    setIsHoaAdmin(true);
+    localStorage.setItem('hoaAdmin', 'true');
+    localStorage.setItem('communityName', communityName);
+    setView('hoa-dashboard');
+  };
+
   const handleLogout = () => {
     setCurrentUser(null);
     setIsAuthenticated(false);
-    setIsCityGov(false);
-    setCityName('');
-    setShowLanding(true);
+    setIsHoaAdmin(false);
+    setCommunityName('');
+    setView('landing');
     localStorage.removeItem('currentUser');
-    localStorage.removeItem('cityGov');
-    localStorage.removeItem('cityName');
+    localStorage.removeItem('hoaAdmin');
+    localStorage.removeItem('communityName');
   };
+
+  // ── Loading ───────────────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" />
+          <p className="mt-4 text-muted-foreground">Loading…</p>
         </div>
       </div>
     );
   }
 
-  // Show landing page
-  if (showLanding && !isAuthenticated && !isCityGov) {
+  // ── Full-screen views (outside React Router) ──────────────────────────────
+
+  if (view === 'landing') {
     return (
       <>
         <LandingPage
-          onCitizenAuth={() => setShowLanding(false)}
-          onCityGovAuth={() => {
-            setShowLanding(false);
-            setShowCityGovAuth(true);
-          }}
+          onCitizenAuth={() => setView('auth')}
+          onCityGovAuth={() => setView('onboarding')}
         />
         <Toaster />
       </>
     );
   }
 
-  // Show city gov auth
-  if (showCityGovAuth) {
+  if (view === 'auth') {
     return (
       <>
-        <CityGovAuth
-          onBack={() => {
-            setShowCityGovAuth(false);
-            setShowLanding(true);
-          }}
-          onSuccess={handleCityGovLogin}
+        <AuthPage onLogin={handleLogin} onBack={() => setView('landing')} />
+        <Toaster />
+      </>
+    );
+  }
+
+  if (view === 'join') {
+    return (
+      <>
+        <JoinPage
+          onJoined={handleLogin}
+          onBack={() => setView('landing')}
+          onPendingApproval={() => setView('pending')}
         />
         <Toaster />
       </>
     );
   }
 
-  // Show city government dashboard
-  if (isCityGov && cityName) {
+  if (view === 'pending') {
     return (
       <>
-        <CityGovDashboard cityName={cityName} onLogout={handleLogout} />
+        <PendingApprovalPage onBack={() => setView('landing')} />
         <Toaster />
       </>
     );
   }
+
+  if (view === 'onboarding') {
+    return (
+      <>
+        <OnboardingPage
+          onComplete={handleHoaOnboardingComplete}
+          onBack={() => setView('landing')}
+        />
+        <Toaster />
+      </>
+    );
+  }
+
+  if (view === 'billing') {
+    return (
+      <>
+        <BillingPage
+          planName={selectedPlan}
+          onComplete={handleBillingComplete}
+          onBack={() => setView('onboarding')}
+        />
+        <Toaster />
+      </>
+    );
+  }
+
+  if (view === 'invite') {
+    return (
+      <>
+        <InvitePage communityName={communityName} onContinue={handleInviteContinue} />
+        <Toaster />
+      </>
+    );
+  }
+
+  if (view === 'hoa-dashboard') {
+    return (
+      <>
+        <CityGovDashboard cityName={communityName} onLogout={handleLogout} />
+        <Toaster />
+      </>
+    );
+  }
+
+  // ── Router-based views (resident app) ─────────────────────────────────────
 
   return (
     <>
       <Router>
         <Routes>
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
               isAuthenticated ? (
-                <Navigate to={currentUser?.role === 'admin' ? '/admin' : '/dashboard'} replace />
+                <Navigate to={currentUser?.role === 'HOA_ADMIN' ? '/admin' : '/dashboard'} replace />
               ) : (
                 <Navigate to="/auth/login" replace />
               )
-            } 
+            }
           />
-          <Route 
-            path="/auth/login" 
+          <Route
+            path="/auth/login"
             element={
               isAuthenticated ? (
-                <Navigate to={currentUser?.role === 'admin' ? '/admin' : '/dashboard'} replace />
+                <Navigate to="/dashboard" replace />
               ) : (
-                <AuthPage 
-                  onLogin={handleLogin}
-                  onBack={() => setShowLanding(true)}
-                />
+                <AuthPage onLogin={handleLogin} onBack={() => setView('landing')} />
               )
-            } 
+            }
           />
           <Route
             path="/dashboard"
@@ -275,7 +339,7 @@ export default function App() {
           <Route
             path="/admin"
             element={
-              isAuthenticated && currentUser?.role === 'admin' ? (
+              isAuthenticated && (currentUser?.role === 'HOA_ADMIN') ? (
                 <AdminDashboard currentUser={currentUser} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/dashboard" replace />

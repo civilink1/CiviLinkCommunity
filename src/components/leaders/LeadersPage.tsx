@@ -35,13 +35,13 @@ export function LeadersPage({ currentUser, onLogout }: LeadersPageProps) {
             <div className="max-w-3xl">
               <div className="flex items-center gap-2 mb-4">
                 <div className="h-1 w-12 bg-[#E31E24] rounded-full"></div>
-                <span className="text-white/80 text-sm tracking-wider uppercase">Government Directory</span>
+                <span className="text-white/80 text-sm tracking-wider uppercase">Board Directory</span>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl mb-4 text-white">
-                Local Leaders
+                Board & Management
               </h1>
               <p className="text-lg md:text-xl text-white/70 max-w-2xl">
-                Connect with city officials and department leaders
+                Connect with HOA board members and property managers
               </p>
             </div>
           </div>
@@ -56,8 +56,8 @@ export function LeadersPage({ currentUser, onLogout }: LeadersPageProps) {
                   <Search className="h-5 w-5 text-[#004080]" />
                 </div>
                 <div>
-                  <CardTitle>Find Leaders</CardTitle>
-                  <CardDescription>Search by name, title, or department</CardDescription>
+                  <CardTitle>Find Board Members</CardTitle>
+                  <CardDescription>Search by name, title, or role</CardDescription>
                 </div>
               </div>
             </CardHeader>

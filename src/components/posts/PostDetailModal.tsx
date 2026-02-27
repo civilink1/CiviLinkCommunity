@@ -86,7 +86,7 @@ export function PostDetailModal({ post, isOpen, onClose, currentUser, onEndorse,
               </div>
               <DialogTitle className="text-2xl leading-tight">{post.title}</DialogTitle>
               <DialogDescription className="sr-only">
-                View full details, comments, and endorse this civic issue
+                View full details, comments, and endorse this neighborhood issue
               </DialogDescription>
             </div>
           </div>
@@ -183,10 +183,10 @@ export function PostDetailModal({ post, isOpen, onClose, currentUser, onEndorse,
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <Edit className="h-5 w-5 text-[#004080]" />
-                        <h4 className="font-semibold text-[#004080]">City Government Actions</h4>
+                        <h4 className="font-semibold text-[#004080]">Board Actions</h4>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Update the status of this issue and notify the citizen
+                        Update the status of this issue and notify the resident
                       </p>
                     </div>
                     <Button

@@ -85,7 +85,7 @@ export function Dashboard({ currentUser, onLogout }: DashboardProps) {
                 Welcome back, <span className="text-[#E31E24]">{currentUser?.name?.split(' ')[0]}</span>
               </h1>
               <p className="text-lg md:text-xl text-white/70 max-w-2xl">
-                Track civic issues, connect with your community, and make a real impact in {currentUser?.city || 'your city'}
+                Track neighborhood issues, connect with your HOA board, and help keep your community running smoothly
               </p>
             </div>
           </div>
@@ -172,7 +172,7 @@ export function Dashboard({ currentUser, onLogout }: DashboardProps) {
                 </div>
                 <div>
                   <CardTitle>Discover Issues</CardTitle>
-                  <CardDescription>Filter and search community posts</CardDescription>
+                  <CardDescription>Filter and search community reports</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -240,8 +240,8 @@ export function Dashboard({ currentUser, onLogout }: DashboardProps) {
           <div>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-2xl mb-1">Community Issues</h2>
-                <p className="text-sm text-muted-foreground">Browse and support local initiatives</p>
+                <h2 className="text-2xl mb-1">Community Reports</h2>
+                <p className="text-sm text-muted-foreground">Browse and support neighborhood issues</p>
               </div>
             </div>
 
