@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { Home, FileText, Bell, Users, User, Search, LogOut, Shield, PlusCircle } from 'lucide-react';
 import { Badge } from '../ui/badge';
-import logo from 'figma:asset/e0850b95def2b76d7623aebb6fd341e7597812e1.png';
+import logo from '../../assets/logo.png';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -39,7 +39,7 @@ export function AppLayout({ children, currentUser, onLogout }: AppLayoutProps) {
             </div>
             <span className="text-xl font-normal">CiviLink</span>
           </Link>
-          
+
           <div className="flex items-center space-x-4 mr-4">
             <div className="hidden md:flex items-center space-x-2 text-sm">
               <span className="text-muted-foreground">Welcome,</span>
@@ -63,7 +63,7 @@ export function AppLayout({ children, currentUser, onLogout }: AppLayoutProps) {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
-              
+
               return (
                 <Link key={item.path} to={item.path}>
                   <Button
@@ -85,7 +85,7 @@ export function AppLayout({ children, currentUser, onLogout }: AppLayoutProps) {
             {navItems.slice(0, 5).map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
-              
+
               return (
                 <Link key={item.path} to={item.path}>
                   <Button

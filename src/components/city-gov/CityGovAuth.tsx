@@ -7,7 +7,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Building2, ArrowLeft, Shield, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import logo from 'figma:asset/e0850b95def2b76d7623aebb6fd341e7597812e1.png';
+import logo from '../../assets/logo.png';
 
 interface CityGovAuthProps {
   onBack: () => void;
@@ -110,7 +110,7 @@ export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     if (isSignUp && step === 1) {
       // Validate before moving to step 2
       if (!isStep1Valid()) {
@@ -248,8 +248,8 @@ export function CityGovAuth({ onBack, onSuccess }: CityGovAuthProps) {
                   {isSignUp ? 'City Government Sign Up' : 'Government Portal Login'}
                 </CardTitle>
                 <CardDescription>
-                  {isSignUp 
-                    ? step === 1 
+                  {isSignUp
+                    ? step === 1
                       ? 'Create your city government account'
                       : 'Complete your account details'
                     : 'Access your city dashboard'

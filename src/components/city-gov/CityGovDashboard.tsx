@@ -4,24 +4,24 @@ import { StatusUpdateModal } from './StatusUpdateModal';
 import { UserProfileModal } from './UserProfileModal';
 import { ReportModal } from './ReportModal';
 import { toast } from 'sonner';
-import logo from 'figma:asset/e0850b95def2b76d7623aebb6fd341e7597812e1.png';
+import logo from '../../assets/logo.png';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { 
-  LayoutDashboard, 
-  Map, 
-  FileText, 
-  TrendingUp, 
-  AlertCircle, 
-  ThumbsUp, 
-  MessageSquare, 
-  Filter, 
-  Eye, 
-  MapPin, 
-  CheckCircle2, 
+import {
+  LayoutDashboard,
+  Map,
+  FileText,
+  TrendingUp,
+  AlertCircle,
+  ThumbsUp,
+  MessageSquare,
+  Filter,
+  Eye,
+  MapPin,
+  CheckCircle2,
   LogOut,
   Clock,
   BarChart3,
@@ -42,7 +42,7 @@ interface CityGovDashboardProps {
 export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [showAllPosts, setShowAllPosts] = useState(false);
+  const [showAllPosts, setShowAllPosts] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [analyticsCategory, setAnalyticsCategory] = useState<string>('all');
   const [selectedPost, setSelectedPost] = useState<any>(null);
@@ -70,7 +70,7 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
           note: note,
           updatedBy: currentUser.name,
         };
-        
+
         return {
           ...post,
           status: newStatus,
@@ -79,14 +79,15 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
       }
       return post;
     }));
-    
+
     toast.success(`Status updated to \"${getStatusLabel(newStatus)}\"`, {
       description: 'The citizen and all endorsers will be notified of this change.',
     });
   };
 
-  // Filter posts for this city (all statuses now)
-  const cityPosts = posts.filter(p => p.city === cityName);
+  // Filter posts for this city — fall back to all posts if none match (mock data support)
+  const cityMatchedPosts = posts.filter(p => p.city === cityName);
+  const cityPosts = cityMatchedPosts.length > 0 ? cityMatchedPosts : posts;
 
   // AI-Powered Mock Data
   /**
@@ -102,7 +103,7 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
       const currentWeek = cityPosts.filter(p => p.category === category).length;
       const randomChange = Math.floor(Math.random() * 60) - 20; // Random between -20 and +40
       const nextWeek = Math.max(1, currentWeek + Math.floor(currentWeek * (randomChange / 100)));
-      
+
       const insights: Record<string, string> = {
         'Infrastructure': 'Upcoming winter weather predicted to increase pothole reports',
         'Transportation': 'Major event downtown next week will increase traffic concerns',
@@ -113,7 +114,7 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
         'Commerce': 'Business district renovation leading to accessibility concerns',
         'Health': 'Flu season increasing health facility capacity concerns'
       };
-      
+
       return {
         category,
         currentWeek,
@@ -154,12 +155,12 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
         .map(category => {
           const categoryIssues = cityPosts.filter(p => p.category === category);
           if (categoryIssues.length === 0) return null;
-          
+
           // Calculate cost based on number of issues and average endorsements
           const baseCost = categoryIssues.length * 12000; // Base $12k per issue
           const endorsementBonus = categoryIssues.reduce((sum, p) => sum + p.endorsements, 0) * 50; // $50 per endorsement
           const totalCost = baseCost + endorsementBonus;
-          
+
           return {
             category,
             cost: `$${totalCost.toLocaleString()}`,
@@ -189,8 +190,8 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
   const displayPosts = showAllPosts ? sortedPosts : topPosts;
 
   // Filter by category
-  const filteredPosts = selectedCategory === 'all' 
-    ? displayPosts 
+  const filteredPosts = selectedCategory === 'all'
+    ? displayPosts
     : displayPosts.filter(p => p.category === selectedCategory);
 
   // Filter by status
@@ -201,7 +202,7 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
   // Calculate heat map data (posts by location)
   const heatMapData = useMemo(() => {
     const locationCounts: Record<string, { count: number; endorsements: number; posts: any[] }> = {};
-    
+
     cityPosts.forEach(post => {
       if (!locationCounts[post.location]) {
         locationCounts[post.location] = { count: 0, endorsements: 0, posts: [] };
@@ -225,7 +226,7 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
     totalIssues: cityPosts.length,
     topIssues: topPosts.length,
     totalEndorsements: cityPosts.reduce((sum, p) => sum + p.endorsements, 0),
-    avgEndorsements: cityPosts.length > 0 
+    avgEndorsements: cityPosts.length > 0
       ? Math.round(cityPosts.reduce((sum, p) => sum + p.endorsements, 0) / cityPosts.length)
       : 0,
     categoryBreakdown: categories.map(cat => ({
@@ -272,7 +273,7 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
       const nextWeek = Math.max(1, currentWeek + Math.floor(currentWeek * (randomChange / 100)));
       const percentChange = currentWeek > 0 ? ((nextWeek - currentWeek) / currentWeek * 100) : 0;
       const isIncrease = percentChange > 0;
-      
+
       const insights: Record<string, string> = {
         'Infrastructure': 'Winter weather expected to significantly increase pothole and road damage reports',
         'Transportation': 'Major downtown event will drive increased traffic and parking concerns',
@@ -283,7 +284,7 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
         'Commerce': 'Business district renovation leading to accessibility concerns',
         'Health': 'Flu season increasing health facility capacity concerns'
       };
-      
+
       return {
         category,
         change: `${isIncrease ? '+' : ''}${Math.abs(Math.round(percentChange))}%`,
@@ -323,9 +324,9 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
                   <p className="text-sm text-muted-foreground">Tracking Portal</p>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={onLogout}
                 className="border-[#E31E24]/30 hover:border-[#E31E24] hover:bg-[#E31E24]/10 hover:text-[#E31E24]"
               >
@@ -414,14 +415,14 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
         {/* Main Content Tabs - Enhanced */}
         <Tabs defaultValue="posts" className="space-y-6">
           <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-2">
-            <TabsTrigger 
+            <TabsTrigger
               value="posts"
               className="flex items-center gap-2"
             >
               <ClipboardList className="h-4 w-4" />
               <span className="hidden sm:inline">All Issues</span>
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="analytics"
               className="flex items-center gap-2"
             >
@@ -473,8 +474,8 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
                   <Button
                     variant={showAllPosts ? "default" : "outline"}
                     onClick={() => setShowAllPosts(!showAllPosts)}
-                    className={showAllPosts 
-                      ? "bg-[#004080] hover:bg-[#003366]" 
+                    className={showAllPosts
+                      ? "bg-[#004080] hover:bg-[#003366]"
                       : "hover:bg-[#004080]/20 hover:border-[#004080]"
                     }
                   >
@@ -506,8 +507,8 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {statusFilteredPosts.map((post) => (
-                  <Card 
-                    key={post.id} 
+                  <Card
+                    key={post.id}
                     className="group flex flex-col border-2 bg-white hover:border-[#004080]/50 transition-all duration-300 hover:shadow-xl hover:shadow-[#004080]/10 hover:-translate-y-1 cursor-pointer"
                     onClick={() => {
                       setSelectedPost(post);
@@ -607,8 +608,8 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
                 <CardContent>
                   <div className="space-y-3">
                     {sortedPosts.slice(0, 5).map((post, index) => (
-                      <div 
-                        key={post.id} 
+                      <div
+                        key={post.id}
                         className="flex items-start gap-3 p-4 rounded-xl border-2 hover:border-[#004080]/50 transition-all duration-300 cursor-pointer"
                         onClick={() => {
                           setSelectedPost(post);
@@ -680,7 +681,7 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
                     const Icon = trend.icon;
                     const percentChange = ((trend.nextWeek - trend.currentWeek) / trend.currentWeek * 100);
                     const isIncrease = percentChange > 0;
-                    
+
                     return (
                       <div key={index} className="p-4 rounded-xl border-2 hover:border-blue-500/50 transition-all">
                         <div className="flex items-start justify-between gap-4 mb-4">
@@ -688,12 +689,12 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
                             <h4 className="font-semibold">{trend.category}</h4>
                             <p className="text-sm text-muted-foreground">{trend.reason}</p>
                           </div>
-                          
+
                           <Badge variant="secondary" className="bg-purple-100 text-purple-700">
                             {trend.confidence}% Confidence
                           </Badge>
                         </div>
-                        
+
                         <div className="grid grid-cols-3 gap-3">
                           <div className="p-3 rounded-lg bg-gray-50 border">
                             <p className="text-xs text-muted-foreground mb-1">Current Week</p>
@@ -742,8 +743,8 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
                           <div className="w-full h-3 bg-muted rounded-full overflow-hidden border-2">
                             <div
                               className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
-                              style={{ 
-                                width: `${(parseInt(item.cost.replace(/[$,]/g, '')) / parseInt(aiPredictions.budgetAnalysis.estimatedTotalCost.replace(/[$,]/g, ''))) * 100}%` 
+                              style={{
+                                width: `${(parseInt(item.cost.replace(/[$,]/g, '')) / parseInt(aiPredictions.budgetAnalysis.estimatedTotalCost.replace(/[$,]/g, ''))) * 100}%`
                               }}
                             ></div>
                           </div>

@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { MapPin, Users, ThumbsUp, TrendingUp, Shield, Sparkles, Building2, ArrowRight, Zap, MessageSquare, Bell } from 'lucide-react';
-import logo from 'figma:asset/e0850b95def2b76d7623aebb6fd341e7597812e1.png';
+import logo from '../../assets/logo.png';
 
 interface LandingPageProps {
   onCitizenAuth: () => void;

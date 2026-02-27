@@ -27,8 +27,8 @@ export function Dashboard({ currentUser, onLogout }: DashboardProps) {
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [endorsedPosts, setEndorsedPosts] = useState<Set<string>>(new Set());
 
-  // Get only approved posts for dashboard
-  const approvedPosts = posts.filter(p => p.status === 'approved');
+  // Get active posts for dashboard (exclude rejected and closed)
+  const approvedPosts = posts.filter(p => p.status !== 'rejected' && p.status !== 'closed');
 
   // Calculate stats
   const totalPosts = approvedPosts.length;
@@ -258,8 +258,8 @@ export function Dashboard({ currentUser, onLogout }: DashboardProps) {
             ) : (
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredPosts.map((post) => (
-                  <Card 
-                    key={post.id} 
+                  <Card
+                    key={post.id}
                     className="group flex flex-col border-2 bg-white hover:border-[#004080]/50 transition-all duration-300 hover:shadow-xl hover:shadow-[#004080]/10 hover:-translate-y-1 cursor-pointer"
                     onClick={() => {
                       setSelectedPost(post);

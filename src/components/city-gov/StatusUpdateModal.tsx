@@ -6,8 +6,7 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { POST_STATUSES } from '../../config/constants';
 import { Badge } from '../ui/badge';
-import { CheckCircle2, XCircle, Clock, TrendingUp, Sparkles } from 'lucide-react';
-import { Card, CardContent } from '../ui/card';
+import { CheckCircle2, XCircle, Clock } from 'lucide-react';
 
 interface StatusUpdateModalProps {
   isOpen: boolean;
@@ -21,56 +20,7 @@ export function StatusUpdateModal({ isOpen, onClose, post, currentStatus, onUpda
   const [selectedStatus, setSelectedStatus] = useState(currentStatus || 'pending');
   const [note, setNote] = useState('');
 
-  /**
-   * TODO - Backend Integration: GET /api/ai/completion-prediction
-   * Calculate AI-powered completion time predictions based on:
-   * - Issue category and complexity
-   * - Historical data for similar issues
-   * - Current department workload
-   * - Resource availability
-   * Parameters: { postId, category, priority, newStatus }
-   */
-  const getCompletionPrediction = (status: string, category: string) => {
-    // Mock AI predictions - replace with real API call
-    const predictions: Record<string, any> = {
-      'in-progress': {
-        estimatedDays: 12,
-        confidence: 85,
-        factors: [
-          { label: 'Similar issues avg', value: '10-14 days' },
-          { label: 'Current workload', value: 'Moderate' },
-          { label: 'Resource availability', value: 'Good' }
-        ]
-      },
-      'under-review': {
-        estimatedDays: 3,
-        confidence: 92,
-        factors: [
-          { label: 'Review process avg', value: '2-4 days' },
-          { label: 'Documentation status', value: 'Complete' },
-          { label: 'Priority level', value: 'High' }
-        ]
-      },
-      'resolved': {
-        estimatedDays: 0,
-        confidence: 100,
-        factors: []
-      },
-      'pending': {
-        estimatedDays: 18,
-        confidence: 78,
-        factors: [
-          { label: 'Queue position', value: '#12' },
-          { label: 'Category backlog', value: '15 issues' },
-          { label: 'Seasonal impact', value: 'Winter delays' }
-        ]
-      }
-    };
 
-    return predictions[status] || predictions['pending'];
-  };
-
-  const prediction = getCompletionPrediction(selectedStatus, post?.category || '');
 
   // Update selectedStatus when currentStatus changes
   useEffect(() => {
@@ -156,7 +106,7 @@ export function StatusUpdateModal({ isOpen, onClose, post, currentStatus, onUpda
               Status Update Note <span className="text-red-500">*</span>
             </Label>
             <p className="text-sm text-muted-foreground mb-2">
-              Explain the status change to the citizen and all users who endorsed this issue. 
+              Explain the status change to the citizen and all users who endorsed this issue.
               Be clear and specific about next steps or reasons for the decision.
             </p>
             <Textarea
@@ -182,7 +132,7 @@ export function StatusUpdateModal({ isOpen, onClose, post, currentStatus, onUpda
                     {selectedStatus === 'rejected' ? 'Issue Rejection' : 'Issue Closure'}
                   </p>
                   <p className="text-sm text-red-800">
-                    {selectedStatus === 'rejected' 
+                    {selectedStatus === 'rejected'
                       ? 'Please clearly explain why this issue is being rejected (e.g., duplicate, not valid, outside city jurisdiction).'
                       : 'Please provide a clear explanation of the resolution or reason for closure.'
                     }
@@ -192,56 +142,7 @@ export function StatusUpdateModal({ isOpen, onClose, post, currentStatus, onUpda
             </div>
           )}
 
-          {/* AI Completion Prediction */}
-          {selectedStatus !== 'resolved' && selectedStatus !== 'rejected' && (
-            <Card className="border-2 bg-gradient-to-br from-purple-50 to-blue-50">
-              <CardContent className="py-4">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                    <Sparkles className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold flex items-center gap-2">
-                      Completion Prediction
-                      <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0 text-xs">AI</Badge>
-                    </h4>
-                    <p className="text-xs text-muted-foreground">Based on historical data and current workload</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-purple-600">{prediction.estimatedDays}</div>
-                    <p className="text-xs text-muted-foreground">days</p>
-                  </div>
-                </div>
 
-                <div className="space-y-2 mb-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Confidence Level</span>
-                    <span className="font-medium">{prediction.confidence}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-purple-500 to-blue-500"
-                      style={{ width: `${prediction.confidence}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                {prediction.factors.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground">Key Factors:</p>
-                    <div className="grid grid-cols-1 gap-2">
-                      {prediction.factors.map((factor: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white/60 border">
-                          <span className="text-xs text-gray-600">{factor.label}</span>
-                          <span className="text-xs font-medium text-gray-900">{factor.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         <DialogFooter className="gap-2">

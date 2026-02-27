@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Eye, EyeOff, Sparkles, Users, CheckCircle, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { mockUsers } from '../../lib/mockData';
-import logo from 'figma:asset/e0850b95def2b76d7623aebb6fd341e7597812e1.png';
+import logo from '../../assets/logo.png';
 
 interface AuthPageProps {
   onLogin: (user: any) => void;
@@ -61,7 +61,7 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
   const handlePasswordChange = (password: string) => {
     setSignupData({ ...signupData, password });
     const passwordError = validatePassword(password);
-    const confirmError = signupData.confirmPassword 
+    const confirmError = signupData.confirmPassword
       ? validateConfirmPassword(signupData.confirmPassword, password)
       : '';
     setValidationErrors({ password: passwordError, confirmPassword: confirmError });
@@ -92,7 +92,7 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     // Check for admin credentials
     if (loginEmail === 'civilink1357@gmail.com' && loginPassword === 'AryanVrinda1') {
       const adminUser = mockUsers.find(u => u.email === loginEmail);
@@ -150,13 +150,14 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
       email: signupData.email,
       password: signupData.password,
       name: signupData.name,
-      role: 'user' as const,
+      role: 'user',
       city: signupData.city,
       state: signupData.state,
       address: signupData.address,
       zipCode: signupData.zipCode,
-      joinDate: new Date().toISOString().split('T')[0],
-      contributionScore: 0
+      joinedDate: new Date().toISOString().split('T')[0],
+      points: 0,
+      badges: []
     };
 
     mockUsers.push(newUser);
@@ -190,7 +191,7 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
           </Button>
         </div>
       )}
-      
+
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -256,7 +257,7 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
                     CiviLink
                   </span>
                 </h1>
-                
+
                 <p className="text-xl text-muted-foreground mb-8">
                   Your voice matters. Connect with your community and drive real change.
                 </p>
@@ -350,8 +351,8 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
                             </button>
                           </div>
                         </div>
-                        <Button 
-                          type="submit" 
+                        <Button
+                          type="submit"
                           className="w-full h-11 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90"
                           size="lg"
                           disabled={isLoading}
@@ -394,7 +395,7 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
                               type={showPassword ? 'text' : 'password'}
                               placeholder="Create a password"
                               value={signupData.password}
-                              onChange={(e) => handlePasswordChange(e.target.value)}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePasswordChange(e.target.value)}
                               required
                               className="h-11 pr-10"
                             />
@@ -420,7 +421,7 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
                               type={showConfirmPassword ? 'text' : 'password'}
                               placeholder="Confirm your password"
                               value={signupData.confirmPassword}
-                              onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
                               required
                               className="h-11 pr-10"
                             />
@@ -484,8 +485,8 @@ export function AuthPage({ onLogin, onBack }: AuthPageProps) {
                             className="h-11"
                           />
                         </div>
-                        <Button 
-                          type="submit" 
+                        <Button
+                          type="submit"
                           className="w-full h-11 bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90"
                           size="lg"
                           disabled={isLoading || !isSignupValid()}
