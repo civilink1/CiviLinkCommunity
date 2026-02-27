@@ -114,31 +114,6 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
   const cityMatchedPosts = posts.filter(p => p.city === cityName);
   const cityPosts = cityMatchedPosts.length > 0 ? cityMatchedPosts : posts;
 
-  // AI-Powered Mock Data (simplified — forecasting removed)
-  const reportData = {
-    totalIssues: stats.totalIssues,
-    totalEndorsements: stats.totalEndorsements,
-    avgEndorsements: stats.avgEndorsements,
-    budgetImpact: 'N/A',
-    avgResolution: '2 days',
-    trendDirection: 'Stable',
-    trends: categories.map(category => ({
-      category,
-      change: '—',
-      isIncrease: false,
-      confidence: 0,
-      insight: `${category} issues are being monitored by the board.`
-    })),
-    budgetBreakdown: [] as any[],
-    recommendations: [
-      'Respond to high-priority issues (10+ endorsements) within 48 hours.',
-      'Post announcements for scheduled maintenance to reduce duplicate reports.',
-      'Review pending resident approvals regularly.',
-      'Use bulk maintenance contracts to reduce per-issue costs.',
-      'Keep community pool/gym hours updated in announcements.',
-    ]
-  };
-
   // Sort by endorsements
   const sortedPosts = useMemo(() => {
     return [...cityPosts].sort((a, b) => b.endorsements - a.endorsements);
@@ -195,6 +170,31 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
       category: cat,
       count: cityPosts.filter(p => p.category === cat).length
     })).filter(c => c.count > 0)
+  };
+
+  // Report data (depends on stats — must be declared after)
+  const reportData = {
+    totalIssues: stats.totalIssues,
+    totalEndorsements: stats.totalEndorsements,
+    avgEndorsements: stats.avgEndorsements,
+    budgetImpact: 'N/A',
+    avgResolution: '2 days',
+    trendDirection: 'Stable',
+    trends: categories.map(category => ({
+      category,
+      change: '—',
+      isIncrease: false,
+      confidence: 0,
+      insight: `${category} issues are being monitored by the board.`
+    })),
+    budgetBreakdown: [] as any[],
+    recommendations: [
+      'Respond to high-priority issues (10+ endorsements) within 48 hours.',
+      'Post announcements for scheduled maintenance to reduce duplicate reports.',
+      'Review pending resident approvals regularly.',
+      'Use bulk maintenance contracts to reduce per-issue costs.',
+      'Keep community pool/gym hours updated in announcements.',
+    ]
   };
 
   const getStatusInfo = (statusValue: string) => {
