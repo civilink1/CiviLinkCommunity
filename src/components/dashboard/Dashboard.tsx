@@ -22,7 +22,6 @@ export function Dashboard({ currentUser, onLogout }: DashboardProps) {
   const [filteredPosts, setFilteredPosts] = useState(mockPosts);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedCity, setSelectedCity] = useState('all');
   const [selectedPost, setSelectedPost] = useState<any>(null);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [endorsedPosts, setEndorsedPosts] = useState<Set<string>>(new Set());
@@ -34,9 +33,6 @@ export function Dashboard({ currentUser, onLogout }: DashboardProps) {
   const totalPosts = approvedPosts.length;
   const totalEndorsements = approvedPosts.reduce((sum, post) => sum + post.endorsements, 0);
   const avgEndorsements = totalPosts > 0 ? Math.round(totalEndorsements / totalPosts) : 0;
-
-  // Get unique cities
-  const cities = ['all', ...Array.from(new Set(posts.map(p => p.city)))];
 
   useEffect(() => {
     let filtered = approvedPosts;
@@ -52,12 +48,8 @@ export function Dashboard({ currentUser, onLogout }: DashboardProps) {
       filtered = filtered.filter(post => post.category === selectedCategory);
     }
 
-    if (selectedCity !== 'all') {
-      filtered = filtered.filter(post => post.city === selectedCity);
-    }
-
     setFilteredPosts(filtered);
-  }, [searchQuery, selectedCategory, selectedCity, posts]);
+  }, [searchQuery, selectedCategory, posts]);
 
   const handleEndorse = (postId: string) => {
     setPosts(posts.map(post =>
@@ -177,7 +169,7 @@ export function Dashboard({ currentUser, onLogout }: DashboardProps) {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   <Input
@@ -200,21 +192,9 @@ export function Dashboard({ currentUser, onLogout }: DashboardProps) {
                   </SelectContent>
                 </Select>
 
-                <Select value={selectedCity} onValueChange={setSelectedCity}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="City" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cities.map((city) => (
-                      <SelectItem key={city} value={city}>
-                        {city === 'all' ? 'All Cities' : city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
 
-              {(searchQuery || selectedCategory !== 'all' || selectedCity !== 'all') && (
+              {(searchQuery || selectedCategory !== 'all') && (
                 <div className="mt-4 flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">
                     Showing {filteredPosts.length} of {approvedPosts.length} posts
@@ -225,7 +205,6 @@ export function Dashboard({ currentUser, onLogout }: DashboardProps) {
                     onClick={() => {
                       setSearchQuery('');
                       setSelectedCategory('all');
-                      setSelectedCity('all');
                     }}
                     className="text-[#E31E24] hover:text-[#E31E24] hover:bg-[#E31E24]/10"
                   >

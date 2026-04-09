@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { LandingPage } from './components/landing/LandingPage';
 import { AuthPage } from './components/auth/AuthPage';
@@ -19,6 +19,9 @@ import { UserProfilePage } from './components/profile/UserProfilePage';
 import { SearchPage } from './components/search/SearchPage';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { Toaster } from './components/ui/sonner';
+import { toast } from 'sonner';
+import { registerAdmin } from './services/auth.service';
+import { createCommunity } from './services/community.service';
 import type { User } from './types';
 
 /**
@@ -31,20 +34,22 @@ import type { User } from './types';
  * - Session persistence via localStorage
  */
 export default function App() {
+  const navigate = useNavigate();
+
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isHoaAdmin, setIsHoaAdmin] = useState(false);
   const [communityName, setCommunityName] = useState('');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // View state (screens rendered outside Router)
-  const [view, setView] = useState<
-    'landing' | 'auth' | 'join' | 'pending'
-    | 'onboarding' | 'billing' | 'invite'
-    | 'hoa-dashboard' | 'app'
-  >('landing');
   const [selectedPlan, setSelectedPlan] = useState('standard');
+
+  // Pending HOA admin data collected during onboarding (used after billing)
+  const [pendingAdminData, setPendingAdminData] = useState<{
+    communityName: string; plan: string; homeCount: string;
+    adminName: string; adminEmail: string; adminPassword: string;
+  } | null>(null);
+  const [inviteCode, setInviteCode] = useState('');
 
   // Restore session
   useEffect(() => {
@@ -59,18 +64,17 @@ export default function App() {
       if (parsed.role === 'HOA_ADMIN' || parsed.role === 'HOA_MODERATOR') {
         setIsHoaAdmin(true);
         setCommunityName(savedCommunity || parsed.city || '');
-        setView('hoa-dashboard');
+        navigate('/hoa-dashboard', { replace: true });
       } else {
-        setView('app');
+        navigate('/dashboard', { replace: true });
       }
     } else if (hoaFlag && savedCommunity) {
       setIsHoaAdmin(true);
       setCommunityName(savedCommunity);
-      setView('hoa-dashboard');
-    } else {
-      setView('landing');
+      navigate('/hoa-dashboard', { replace: true });
     }
     setIsLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -85,27 +89,62 @@ export default function App() {
       setCommunityName(user.city || '');
       localStorage.setItem('hoaAdmin', 'true');
       localStorage.setItem('communityName', user.city || '');
-      setView('hoa-dashboard');
+      navigate('/hoa-dashboard');
     } else {
-      setView('app');
+      navigate('/dashboard');
     }
   };
 
-  const handleHoaOnboardingComplete = (name: string, plan: string) => {
-    setCommunityName(name);
-    setSelectedPlan(plan);
-    setView('billing');
+  const handleHoaOnboardingComplete = (data: {
+    communityName: string; plan: string; homeCount: string;
+    adminName: string; adminEmail: string; adminPassword: string;
+  }) => {
+    setCommunityName(data.communityName);
+    setSelectedPlan(data.plan);
+    setPendingAdminData(data);
+    navigate('/billing');
   };
 
-  const handleBillingComplete = () => {
-    setView('invite');
+  const handleBillingComplete = async () => {
+    if (!pendingAdminData) {
+      navigate('/invite');
+      return;
+    }
+
+    const authResult = await registerAdmin({
+      name: pendingAdminData.adminName,
+      email: pendingAdminData.adminEmail,
+      password: pendingAdminData.adminPassword,
+    });
+
+    if (!authResult.success || !authResult.data) {
+      throw new Error(authResult.error || 'Account creation failed. This email may already be registered.');
+    }
+
+    const communityResult = await createCommunity({
+      name: pendingAdminData.communityName,
+      planTier: pendingAdminData.plan,
+      homeCount: parseInt(pendingAdminData.homeCount, 10) || 0,
+      adminUserId: authResult.data.user.id,
+    });
+
+    if (!communityResult.success || !communityResult.data) {
+      throw new Error(communityResult.error || 'Failed to create your community. Please try again.');
+    }
+
+    setInviteCode(communityResult.data.invite_code);
+    setCurrentUser(authResult.data.user);
+    setIsAuthenticated(true);
+    setIsHoaAdmin(true);
+    localStorage.setItem('communityName', pendingAdminData.communityName);
+    navigate('/invite');
   };
 
   const handleInviteContinue = () => {
     setIsHoaAdmin(true);
     localStorage.setItem('hoaAdmin', 'true');
     localStorage.setItem('communityName', communityName);
-    setView('hoa-dashboard');
+    navigate('/hoa-dashboard');
   };
 
   const handleLogout = () => {
@@ -113,10 +152,10 @@ export default function App() {
     setIsAuthenticated(false);
     setIsHoaAdmin(false);
     setCommunityName('');
-    setView('landing');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('hoaAdmin');
     localStorage.removeItem('communityName');
+    navigate('/');
   };
 
   // ── Loading ───────────────────────────────────────────────────────────────
@@ -132,222 +171,180 @@ export default function App() {
     );
   }
 
-  // ── Full-screen views (outside React Router) ──────────────────────────────
-
-  if (view === 'landing') {
-    return (
-      <>
-        <LandingPage
-          onCitizenAuth={() => setView('auth')}
-          onCityGovAuth={() => setView('onboarding')}
-        />
-        <Toaster />
-      </>
-    );
-  }
-
-  if (view === 'auth') {
-    return (
-      <>
-        <AuthPage onLogin={handleLogin} onBack={() => setView('landing')} />
-        <Toaster />
-      </>
-    );
-  }
-
-  if (view === 'join') {
-    return (
-      <>
-        <JoinPage
-          onJoined={handleLogin}
-          onBack={() => setView('landing')}
-          onPendingApproval={() => setView('pending')}
-        />
-        <Toaster />
-      </>
-    );
-  }
-
-  if (view === 'pending') {
-    return (
-      <>
-        <PendingApprovalPage onBack={() => setView('landing')} />
-        <Toaster />
-      </>
-    );
-  }
-
-  if (view === 'onboarding') {
-    return (
-      <>
-        <OnboardingPage
-          onComplete={handleHoaOnboardingComplete}
-          onBack={() => setView('landing')}
-        />
-        <Toaster />
-      </>
-    );
-  }
-
-  if (view === 'billing') {
-    return (
-      <>
-        <BillingPage
-          planName={selectedPlan}
-          onComplete={handleBillingComplete}
-          onBack={() => setView('onboarding')}
-        />
-        <Toaster />
-      </>
-    );
-  }
-
-  if (view === 'invite') {
-    return (
-      <>
-        <InvitePage communityName={communityName} onContinue={handleInviteContinue} />
-        <Toaster />
-      </>
-    );
-  }
-
-  if (view === 'hoa-dashboard') {
-    return (
-      <>
-        <CityGovDashboard cityName={communityName} onLogout={handleLogout} />
-        <Toaster />
-      </>
-    );
-  }
-
-  // ── Router-based views (resident app) ─────────────────────────────────────
+  // ── Unified routes ────────────────────────────────────────────────────────
 
   return (
     <>
-      <Router>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              isAuthenticated ? (
-                <Navigate to={currentUser?.role === 'HOA_ADMIN' ? '/admin' : '/dashboard'} replace />
-              ) : (
-                <Navigate to="/auth/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/auth/login"
-            element={
-              isAuthenticated ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <AuthPage onLogin={handleLogin} onBack={() => setView('landing')} />
-              )
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              isAuthenticated ? (
-                <Dashboard currentUser={currentUser} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/auth/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/posts"
-            element={
-              isAuthenticated ? (
-                <PostsPage currentUser={currentUser} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/auth/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/posts/create"
-            element={
-              isAuthenticated ? (
-                <CreatePostPage currentUser={currentUser} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/auth/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/posts/:postId"
-            element={
-              isAuthenticated ? (
-                <PostDetailPage currentUser={currentUser} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/auth/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/notifications"
-            element={
-              isAuthenticated ? (
-                <NotificationsPage currentUser={currentUser} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/auth/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/leaders"
-            element={
-              isAuthenticated ? (
-                <LeadersPage currentUser={currentUser} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/auth/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              isAuthenticated ? (
-                <ProfilePage currentUser={currentUser} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/auth/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/users/:userId"
-            element={
-              isAuthenticated ? (
-                <UserProfilePage currentUser={currentUser} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/auth/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/search"
-            element={
-              isAuthenticated ? (
-                <SearchPage currentUser={currentUser} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/auth/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              isAuthenticated && (currentUser?.role === 'HOA_ADMIN') ? (
-                <AdminDashboard currentUser={currentUser} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/dashboard" replace />
-              )
-            }
-          />
-        </Routes>
-      </Router>
+      <Routes>
+        {/* ── Public ── */}
+        <Route
+          path="/"
+          element={
+            <LandingPage
+              onCitizenAuth={() => navigate('/auth')}
+              onCityGovAuth={() => navigate('/onboarding')}
+            />
+          }
+        />
+
+        <Route
+          path="/auth"
+          element={
+            isAuthenticated
+              ? <Navigate to={isHoaAdmin ? '/hoa-dashboard' : '/dashboard'} replace />
+              : <AuthPage onLogin={handleLogin} onBack={() => navigate('/')} />
+          }
+        />
+
+        <Route
+          path="/join"
+          element={
+            <JoinPage
+              onJoined={handleLogin}
+              onBack={() => navigate('/')}
+              onPendingApproval={() => navigate('/pending')}
+            />
+          }
+        />
+
+        <Route
+          path="/pending"
+          element={<PendingApprovalPage onBack={() => navigate('/')} />}
+        />
+
+        {/* ── HOA onboarding flow ── */}
+        <Route
+          path="/onboarding"
+          element={
+            <OnboardingPage
+              onComplete={handleHoaOnboardingComplete}
+              onBack={() => navigate('/')}
+            />
+          }
+        />
+
+        <Route
+          path="/billing"
+          element={
+            <BillingPage
+              planName={selectedPlan}
+              onComplete={handleBillingComplete}
+              onBack={() => navigate('/onboarding')}
+            />
+          }
+        />
+
+        <Route
+          path="/invite"
+          element={
+            <InvitePage
+              communityName={communityName}
+              inviteCode={inviteCode}
+              onContinue={handleInviteContinue}
+            />
+          }
+        />
+
+        <Route
+          path="/hoa-dashboard"
+          element={
+            isHoaAdmin
+              ? <CityGovDashboard cityName={communityName} onLogout={handleLogout} />
+              : <Navigate to="/" replace />
+          }
+        />
+
+        {/* ── Resident app ── */}
+        <Route
+          path="/dashboard"
+          element={
+            isAuthenticated
+              ? <Dashboard currentUser={currentUser} onLogout={handleLogout} />
+              : <Navigate to="/auth" replace />
+          }
+        />
+
+        <Route
+          path="/posts"
+          element={
+            isAuthenticated
+              ? <PostsPage currentUser={currentUser} onLogout={handleLogout} />
+              : <Navigate to="/auth" replace />
+          }
+        />
+
+        <Route
+          path="/posts/create"
+          element={
+            isAuthenticated
+              ? <CreatePostPage currentUser={currentUser} onLogout={handleLogout} />
+              : <Navigate to="/auth" replace />
+          }
+        />
+
+        <Route
+          path="/posts/:postId"
+          element={
+            isAuthenticated
+              ? <PostDetailPage currentUser={currentUser} onLogout={handleLogout} />
+              : <Navigate to="/auth" replace />
+          }
+        />
+
+        <Route
+          path="/notifications"
+          element={
+            isAuthenticated
+              ? <NotificationsPage currentUser={currentUser} onLogout={handleLogout} />
+              : <Navigate to="/auth" replace />
+          }
+        />
+
+        <Route
+          path="/leaders"
+          element={
+            isAuthenticated
+              ? <LeadersPage currentUser={currentUser} onLogout={handleLogout} />
+              : <Navigate to="/auth" replace />
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            isAuthenticated
+              ? <ProfilePage currentUser={currentUser} onLogout={handleLogout} />
+              : <Navigate to="/auth" replace />
+          }
+        />
+
+        <Route
+          path="/users/:userId"
+          element={
+            isAuthenticated
+              ? <UserProfilePage currentUser={currentUser} onLogout={handleLogout} />
+              : <Navigate to="/auth" replace />
+          }
+        />
+
+        <Route
+          path="/search"
+          element={
+            isAuthenticated
+              ? <SearchPage currentUser={currentUser} onLogout={handleLogout} />
+              : <Navigate to="/auth" replace />
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            isAuthenticated && currentUser?.role === 'HOA_ADMIN'
+              ? <AdminDashboard currentUser={currentUser} onLogout={handleLogout} />
+              : <Navigate to="/dashboard" replace />
+          }
+        />
+      </Routes>
       <Toaster />
     </>
   );

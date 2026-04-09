@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion } from 'motion/react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { MapPin, Users, ThumbsUp, TrendingUp, Shield, Sparkles, Building2, ArrowRight, Zap, MessageSquare, Bell, Home, UserPlus } from 'lucide-react';
@@ -10,8 +10,26 @@ interface LandingPageProps {
   onCityGovAuth: () => void;
 }
 
+const ROTATING_WORDS: { text: string; duration: number }[] = [
+  { text: 'Community',   duration: 2500 },
+  { text: 'Neighborhood', duration: 1500 },
+  { text: 'HOA',         duration: 1500 },
+  { text: 'Street',      duration: 1500 },
+  { text: 'Board',       duration: 1500 },
+  { text: 'Future',      duration: 1500 },
+];
+
 export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) {
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [wordIndex, setWordIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setTimeout(
+      () => setWordIndex((i) => (i + 1) % ROTATING_WORDS.length),
+      ROTATING_WORDS[wordIndex].duration,
+    );
+    return () => clearTimeout(id);
+  }, [wordIndex]);
 
   const features = [
     {
@@ -170,8 +188,20 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
             >
               <h1 className="text-5xl md:text-7xl leading-tight text-white">
                 Your Voice,<br />
-                <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                  Your Community
+                <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent">Your </span>
+                <span className="inline-block">
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={ROTATING_WORDS[wordIndex].text}
+                      className="inline-block bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent"
+                      initial={{ opacity: 0, y: 14 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -14 }}
+                      transition={{ duration: 0.35, ease: 'easeInOut' }}
+                    >
+                      {ROTATING_WORDS[wordIndex].text}
+                    </motion.span>
+                  </AnimatePresence>
                 </span>
               </h1>
               
@@ -373,7 +403,7 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
                     Ready to Make a Difference?
                   </h2>
                   <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
-                    Join hundreds of HOA communities using CiviLink to keep their neighborhoods running smoothly
+                    Give your HOA community the tools to communicate openly, resolve issues faster, and keep every resident in the loop.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <motion.div
@@ -418,7 +448,7 @@ export function LandingPage({ onCitizenAuth, onCityGovAuth }: LandingPageProps) 
               CiviLink
             </span>
           </div>
-          <p>&copy; 2024 CiviLink Community. Empowering neighborhoods through technology.</p>
+          <p>&copy; 2026 CiviLink Community. Empowering neighborhoods through technology.</p>
         </footer>
       </div>
     </div>

@@ -7,7 +7,7 @@ import { Label } from '../ui/label';
 import { FormattedInput } from '../ui/FormattedInput';
 import { KeyRound, UserPlus, ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { joinCommunity, mockCommunity } from '../../lib/mockData';
+import { register } from '../../services/auth.service';
 import type { User } from '../../types';
 import logo from '../../assets/logo.png';
 
@@ -17,7 +17,7 @@ interface JoinPageProps {
   onPendingApproval: () => void;
 }
 
-const darkInput = 'bg-white/10 border-white/20 text-slate-100 placeholder:text-slate-500 focus-visible:border-blue-400 focus-visible:ring-blue-400/30';
+const darkInput = 'bg-slate-700 border-slate-500 text-white placeholder:text-slate-400 focus-visible:border-blue-400 focus-visible:ring-blue-400/30';
 
 export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps) {
   const [step, setStep] = useState<'info' | 'code'>('info');
@@ -52,26 +52,32 @@ export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps)
     setStep('code');
   };
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     setCodeError('');
     setJoining(true);
-    try {
-      const { user, pending } = joinCommunity(
-        { name, email, phone, address, unit: unit || undefined, password },
-        inviteCode
-      );
-      if (pending) {
-        toast.info('Your account is pending admin approval.');
-        onPendingApproval();
-      } else {
-        toast.success('Welcome to ' + mockCommunity.name + '!');
-        onJoined(user);
-      }
-    } catch (err: any) {
-      setCodeError(err.message || 'Could not join. Please try again.');
-    } finally {
+    const result = await register({
+      name,
+      email,
+      password,
+      inviteCode,
+      unit: unit || undefined,
+      phone,
+      address,
+    });
+    if (!result.success || !result.data) {
+      setCodeError(result.error || 'Could not join. Please try again.');
       setJoining(false);
+      return;
     }
+    const { user } = result.data;
+    if (user.approvalStatus === 'PENDING') {
+      toast.info('Your account is pending admin approval.');
+      onPendingApproval();
+    } else {
+      toast.success('Welcome to ' + (user.city || 'your community') + '!');
+      onJoined(user);
+    }
+    setJoining(false);
   };
 
   return (
@@ -87,7 +93,7 @@ export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps)
         </Button>
         <img src={logo} alt="CiviLink Community" className="h-8" />
         <span className="text-white font-semibold text-lg">Join Your Community</span>
-        <span className="ml-auto text-sm text-slate-500">
+        <span className="ml-auto text-sm font-medium text-slate-300 bg-white/10 px-3 py-1 rounded-full">
           Step {step === 'info' ? '1' : '2'} of 2
         </span>
       </header>
@@ -102,13 +108,13 @@ export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps)
               exit={{ opacity: 0, x: -20 }}
               className="w-full max-w-lg"
             >
-              <Card className="border-white/10 bg-white/5">
+              <Card className="border-slate-600 bg-slate-800/90">
                 <CardHeader className="text-center">
-                  <div className="mx-auto w-14 h-14 rounded-full bg-blue-500/20 flex items-center justify-center mb-2">
+                  <div className="mx-auto w-14 h-14 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center mb-2">
                     <UserPlus className="h-7 w-7 text-blue-400" />
                   </div>
-                  <CardTitle className="text-slate-100">Your Information</CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardTitle className="text-white">Your Information</CardTitle>
+                  <CardDescription className="text-slate-300">
                     Tell us about yourself before entering the invite code.
                   </CardDescription>
                 </CardHeader>
@@ -116,7 +122,7 @@ export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps)
                 <CardContent className="space-y-4">
                   {/* Name */}
                   <div className="space-y-1.5">
-                    <Label className="text-slate-300">Full Name <span className="text-red-400">*</span></Label>
+                    <label className="block text-sm font-medium text-slate-200">Full Name <span className="text-red-400">*</span></label>
                     <Input
                       placeholder="Jane Smith"
                       value={name}
@@ -127,7 +133,7 @@ export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps)
 
                   {/* Email */}
                   <div className="space-y-1.5">
-                    <Label className="text-slate-300">Email <span className="text-red-400">*</span></Label>
+                    <label className="block text-sm font-medium text-slate-200">Email <span className="text-red-400">*</span></label>
                     <Input
                       type="email"
                       placeholder="jane@example.com"
@@ -139,7 +145,7 @@ export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps)
 
                   {/* Phone */}
                   <div className="space-y-1.5">
-                    <Label className="text-slate-300">Phone <span className="text-red-400">*</span></Label>
+                    <label className="block text-sm font-medium text-slate-200">Phone <span className="text-red-400">*</span></label>
                     <FormattedInput
                       format="phone"
                       placeholder="(555) 000-1234"
@@ -151,7 +157,7 @@ export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps)
 
                   {/* Address */}
                   <div className="space-y-1.5">
-                    <Label className="text-slate-300">Home Address <span className="text-red-400">*</span></Label>
+                    <label className="block text-sm font-medium text-slate-200">Home Address <span className="text-red-400">*</span></label>
                     <Input
                       placeholder="123 Sunset Ridge Blvd"
                       value={address}
@@ -162,7 +168,7 @@ export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps)
 
                   {/* Unit (optional) */}
                   <div className="space-y-1.5">
-                    <Label className="text-slate-300">Unit / Lot # <span className="text-slate-500 text-xs">(optional)</span></Label>
+                    <label className="block text-sm font-medium text-slate-200">Unit / Lot # <span className="text-slate-400 text-xs">(optional)</span></label>
                     <Input
                       placeholder="e.g. Unit 14B"
                       value={unit}
@@ -173,7 +179,7 @@ export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps)
 
                   {/* Password */}
                   <div className="space-y-1.5">
-                    <Label className="text-slate-300">Password <span className="text-red-400">*</span></Label>
+                    <label className="block text-sm font-medium text-slate-200">Password <span className="text-red-400">*</span></label>
                     <Input
                       type="password"
                       placeholder="Min 8 characters"
@@ -185,7 +191,7 @@ export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps)
 
                   {/* Confirm password */}
                   <div className="space-y-1.5">
-                    <Label className="text-slate-300">Confirm Password <span className="text-red-400">*</span></Label>
+                    <label className="block text-sm font-medium text-slate-200">Confirm Password <span className="text-red-400">*</span></label>
                     <Input
                       type="password"
                       placeholder="Re-enter password"
@@ -219,20 +225,20 @@ export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps)
               exit={{ opacity: 0, x: 20 }}
               className="w-full max-w-md"
             >
-              <Card className="border-white/10 bg-white/5">
+              <Card className="border-slate-600 bg-slate-800/90">
                 <CardHeader className="text-center">
-                  <div className="mx-auto w-14 h-14 rounded-full bg-blue-500/20 flex items-center justify-center mb-2">
+                  <div className="mx-auto w-14 h-14 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center mb-2">
                     <KeyRound className="h-7 w-7 text-blue-400" />
                   </div>
-                  <CardTitle className="text-slate-100">Enter Invite Code</CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Joining <strong className="text-slate-200">{mockCommunity.name}</strong>
+                  <CardTitle className="text-white">Enter Invite Code</CardTitle>
+                  <CardDescription className="text-slate-300">
+                    Enter the invite code from your HOA admin.
                   </CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label className="text-slate-300">Invite Code</Label>
+                    <label className="block text-sm font-medium text-slate-200">Invite Code</label>
                     <Input
                       placeholder="e.g. A3K9X2M7"
                       value={inviteCode}
@@ -246,7 +252,7 @@ export function JoinPage({ onJoined, onBack, onPendingApproval }: JoinPageProps)
                     )}
                   </div>
 
-                  <p className="text-xs text-slate-500 text-center">
+                  <p className="text-xs text-slate-400 text-center">
                     Contact your HOA administrator if you do not have a code.
                   </p>
 

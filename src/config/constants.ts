@@ -163,8 +163,8 @@ export const PLAN_TIERS = [
     customPricing: false,
     features: [
       'Up to 100 homes',
-      'Endorsement-based reporting',
-      'AI content moderation',
+      '2 admin accounts',
+      'Issue reporting & endorsements',
       'Board dashboard',
       'Status tracking',
       'Email notifications',
@@ -178,11 +178,8 @@ export const PLAN_TIERS = [
     customPricing: false,
     features: [
       'Up to 250 homes',
+      '4 admin accounts',
       'Everything in Starter',
-      'Advanced analytics',
-      'Duplicate report merging',
-      'Resident management dashboard',
-      'Custom branding',
     ],
   },
   {
@@ -193,11 +190,8 @@ export const PLAN_TIERS = [
     customPricing: false,
     features: [
       'Up to 500 homes',
+      '10 admin accounts',
       'Everything in Standard',
-      'Multi-admin access (up to 5)',
-      'Data export (CSV)',
-      'Priority support',
-      'API access',
     ],
   },
   {
@@ -208,10 +202,8 @@ export const PLAN_TIERS = [
     customPricing: true,
     features: [
       '500+ homes',
+      'Unlimited admin accounts',
       'Everything in Premium',
-      'Unlimited admins',
-      'Dedicated onboarding support',
-      'SSO',
     ],
   },
 ];

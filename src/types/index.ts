@@ -82,6 +82,8 @@ export interface RegisterData extends AuthCredentials {
   name: string;
   inviteCode: string;
   unit?: string;
+  phone?: string;
+  address?: string;
 }
 
 // ============================================================================

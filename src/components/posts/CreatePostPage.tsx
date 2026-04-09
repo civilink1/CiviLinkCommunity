@@ -368,15 +368,6 @@ export function CreatePostPage({ currentUser, onLogout }: CreatePostPageProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>City</Label>
-                  <Input
-                    placeholder="City"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
                   <Label>Specific Location</Label>
                   <Input
                     placeholder="e.g., Near clubhouse, Pool area, Lot 42"

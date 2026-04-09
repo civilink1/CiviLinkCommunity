@@ -6,6 +6,7 @@ import { ReportModal } from './ReportModal';
 import { toast } from 'sonner';
 import logo from '../../assets/logo.png';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
@@ -38,6 +39,12 @@ import {
   Check,
   X,
   Save,
+  Plus,
+  Trash2,
+  GripVertical,
+  UserCog,
+  Phone,
+  Mail,
 } from 'lucide-react';
 import { mockPosts, categories, mockUsers, mockCommunity, createAnnouncement, approveUser, denyUser, updateCommunitySettings } from '../../lib/mockData';
 import { POST_STATUSES } from '../../config/constants';
@@ -68,6 +75,37 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
   const [settingsCommentsEnabled, setSettingsCommentsEnabled] = useState(mockCommunity.commentsEnabled);
   const [announcementTitle, setAnnouncementTitle] = useState('');
   const [announcementMessage, setAnnouncementMessage] = useState('');
+
+  // Board Members state
+  interface BoardMember {
+    id: string;
+    name: string;
+    position: string;
+    email: string;
+    phone: string;
+    description: string;
+    rank: number;
+  }
+  const [boardMembers, setBoardMembers] = useState<BoardMember[]>([
+    { id: '1', name: 'Sarah Mitchell', position: 'President', email: 'sarah@example.com', phone: '(555) 101-0001', description: 'Serving since 2022', rank: 1 },
+    { id: '2', name: 'James Thornton', position: 'Vice President', email: 'james@example.com', phone: '(555) 101-0002', description: '', rank: 2 },
+    { id: '3', name: 'Lisa Chen', position: 'Treasurer', email: 'lisa@example.com', phone: '(555) 101-0003', description: '', rank: 3 },
+  ]);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [newMember, setNewMember] = useState({ name: '', position: '', email: '', phone: '', description: '', rank: boardMembers.length + 1 });
+
+  const addBoardMember = () => {
+    if (!newMember.name.trim() || !newMember.position.trim() || !newMember.email.trim() || !newMember.phone.trim()) return;
+    setBoardMembers(prev => [...prev, { ...newMember, id: Date.now().toString() }].sort((a, b) => a.rank - b.rank));
+    setNewMember({ name: '', position: '', email: '', phone: '', description: '', rank: boardMembers.length + 2 });
+    setShowAddMember(false);
+    toast.success('Board member added');
+  };
+
+  const removeBoardMember = (id: string) => {
+    setBoardMembers(prev => prev.filter(m => m.id !== id));
+    toast.success('Board member removed');
+  };
   const [announcementUrgent, setAnnouncementUrgent] = useState(false);
 
   // Users state
@@ -691,150 +729,284 @@ export function CityGovDashboard({ cityName, onLogout }: CityGovDashboardProps) 
           </TabsContent>
 
           {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-6">
+          <TabsContent value="settings">
             <Card className="border-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-[#004080]" />
-                  Community Settings
-                </CardTitle>
-                <CardDescription>Update your community details and preferences</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="mb-1 block">Community Name</Label>
-                    <Input
-                      value={settingsCommunityName}
-                      onChange={e => setSettingsCommunityName(e.target.value)}
-                      placeholder="e.g. Sunset Ridge"
-                    />
+              <Accordion type="multiple" defaultValue={['community']} className="divide-y">
+              {/* Community Settings */}
+              <AccordionItem value="community" className="border-0">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/30 rounded-t-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-[#004080]/10 flex items-center justify-center flex-shrink-0">
+                      <Settings className="h-4 w-4 text-[#004080]" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-sm">Community Settings</p>
+                      <p className="text-xs text-muted-foreground font-normal">Name, home count, approval & comments</p>
+                    </div>
                   </div>
-                  <div>
-                    <Label className="mb-1 block">Number of Homes</Label>
-                    <Input
-                      type="number"
-                      value={settingsHomeCount}
-                      onChange={e => setSettingsHomeCount(Number(e.target.value))}
-                      placeholder="e.g. 120"
-                    />
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6 pt-0">
+                  <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2 sm:col-span-1">
+                      <Label className="mb-1.5 block text-sm font-medium">Community Name</Label>
+                      <Input
+                        value={settingsCommunityName}
+                        onChange={e => setSettingsCommunityName(e.target.value)}
+                        placeholder="e.g. Sunset Ridge"
+                      />
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <Label className="mb-1.5 block text-sm font-medium">Number of Homes</Label>
+                      <Input
+                        type="number"
+                        value={settingsHomeCount}
+                        onChange={e => setSettingsHomeCount(e.target.value)}
+                        placeholder="e.g. 120"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-col gap-3 pt-2">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settingsRequireApproval}
-                      onChange={e => setSettingsRequireApproval(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-[#004080]"
-                    />
-                    <span className="text-sm font-medium">Require admin approval before residents can join</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={settingsCommentsEnabled}
-                      onChange={e => setSettingsCommentsEnabled(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-[#004080]"
-                    />
-                    <span className="text-sm font-medium">Allow residents to leave comments on issues</span>
-                  </label>
-                </div>
-                <Button
-                  className="bg-[#004080] hover:bg-[#003060] text-white mt-2"
-                  onClick={() => {
-                    updateCommunitySettings({
-                      name: settingsCommunityName,
-                      homeCount: settingsHomeCount,
-                      requireApproval: settingsRequireApproval,
-                      commentsEnabled: settingsCommentsEnabled,
-                    });
-                    toast.success('Settings saved');
-                  }}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Settings
-                </Button>
-              </CardContent>
-            </Card>
-            <Card className="border-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-[#004080]" />
-                  Post Announcement
-                </CardTitle>
-                <CardDescription>Notify all residents with a community-wide message</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="mb-1 block">Title</Label>
-                  <Input
-                    value={announcementTitle}
-                    onChange={e => setAnnouncementTitle(e.target.value)}
-                    placeholder="e.g. Pool Maintenance This Weekend"
-                  />
-                </div>
-                <div>
-                  <Label className="mb-1 block">Message</Label>
-                  <textarea
-                    className="w-full min-h-[90px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value={announcementMessage}
-                    onChange={e => setAnnouncementMessage(e.target.value)}
-                    placeholder="Write your announcement here..."
-                  />
-                </div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={announcementUrgent}
-                    onChange={e => setAnnouncementUrgent(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-red-600"
-                  />
-                  <span className="text-sm font-medium text-red-600">Mark as urgent</span>
-                </label>
-                <Button
-                  className="bg-[#004080] hover:bg-[#003060] text-white"
-                  disabled={!announcementTitle.trim() || !announcementMessage.trim()}
-                  onClick={() => {
-                    createAnnouncement({
-                      communityId: mockCommunity.id,
-                      title: announcementTitle.trim(),
-                      message: announcementMessage.trim(),
-                      urgent: announcementUrgent,
-                      authorName: cityName,
-                    });
-                    setAnnouncementTitle('');
-                    setAnnouncementMessage('');
-                    setAnnouncementUrgent(false);
-                    toast.success('Announcement posted to all residents');
-                  }}
-                >
-                  <Bell className="h-4 w-4 mr-2" />
-                  Post Announcement
-                </Button>
-              </CardContent>
-            </Card>
-            {mockCommunity.announcements.length > 0 && (
-              <Card className="border-2">
-                <CardHeader>
-                  <CardTitle className="text-base">Recent Announcements</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {[...mockCommunity.announcements].reverse().map(ann => (
-                    <div key={ann.id} className={`p-4 rounded-xl border-2 ${ann.urgent ? 'border-red-200 bg-red-50' : 'border-gray-100 bg-gray-50'}`}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-semibold text-sm">{ann.title}</p>
-                          <p className="text-sm text-muted-foreground mt-0.5">{ann.message}</p>
-                        </div>
-                        {ann.urgent && <Badge className="bg-red-500 text-white border-0 shrink-0">Urgent</Badge>}
+                  <div className="space-y-3 pt-1">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Permissions</p>
+                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border bg-muted/30 hover:bg-muted/60 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={settingsRequireApproval}
+                        onChange={e => setSettingsRequireApproval(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-[#004080] accent-[#004080]"
+                      />
+                      <div>
+                        <p className="text-sm font-medium">Require admin approval</p>
+                        <p className="text-xs text-muted-foreground">New residents need approval before joining</p>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">{new Date(ann.createdAt).toLocaleDateString()}</p>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border bg-muted/30 hover:bg-muted/60 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={settingsCommentsEnabled}
+                        onChange={e => setSettingsCommentsEnabled(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-[#004080] accent-[#004080]"
+                      />
+                      <div>
+                        <p className="text-sm font-medium">Enable comments</p>
+                        <p className="text-xs text-muted-foreground">Residents can comment on issues</p>
+                      </div>
+                    </label>
+                  </div>
+                  <Button
+                    className="bg-[#004080] hover:bg-[#003060] text-white w-full mt-2"
+                    onClick={() => {
+                      updateCommunitySettings({
+                        name: settingsCommunityName,
+                        homeCount: settingsHomeCount,
+                        requireApproval: settingsRequireApproval,
+                        commentsEnabled: settingsCommentsEnabled,
+                      });
+                      toast.success('Settings saved');
+                    }}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Settings
+                  </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Board Members */}
+              <AccordionItem value="board" className="border-0">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center flex-shrink-0">
+                      <UserCog className="h-4 w-4 text-violet-600" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-sm">Board Members</p>
+                      <p className="text-xs text-muted-foreground font-normal">{boardMembers.length} member{boardMembers.length !== 1 ? 's' : ''} · ordered by rank</p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6 pt-0">
+                  <div className="space-y-3">
+                  {boardMembers.sort((a, b) => a.rank - b.rank).map((member) => (
+                    <div key={member.id} className="flex items-start gap-3 p-3 rounded-xl border bg-muted/20 hover:bg-muted/40 transition-colors group">
+                      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-[#004080] text-white font-bold text-xs flex-shrink-0 mt-0.5">
+                        {member.rank}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-sm">{member.name}</span>
+                          <Badge className="text-xs bg-[#004080]/10 text-[#004080] border-0 font-medium">{member.position}</Badge>
+                        </div>
+                        <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{member.email}</span>
+                          <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{member.phone}</span>
+                        </div>
+                        {member.description && <p className="text-xs text-muted-foreground mt-0.5 italic">{member.description}</p>}
+                      </div>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 flex-shrink-0 transition-all" onClick={() => removeBoardMember(member.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   ))}
-                </CardContent>
-              </Card>
-            )}
+
+                  {showAddMember ? (
+                    <div className="p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50 space-y-3 mt-2">
+                      <p className="text-sm font-semibold text-violet-800">New Board Member</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="mb-1 block text-xs">Name *</Label>
+                          <Input className="h-8 text-sm" placeholder="Full name" value={newMember.name} onChange={e => setNewMember(p => ({ ...p, name: e.target.value }))} />
+                        </div>
+                        <div>
+                          <Label className="mb-1 block text-xs">Position *</Label>
+                          <Input className="h-8 text-sm" placeholder="e.g. President" value={newMember.position} onChange={e => setNewMember(p => ({ ...p, position: e.target.value }))} />
+                        </div>
+                        <div>
+                          <Label className="mb-1 block text-xs">Email *</Label>
+                          <Input className="h-8 text-sm" type="email" placeholder="email@example.com" value={newMember.email} onChange={e => setNewMember(p => ({ ...p, email: e.target.value }))} />
+                        </div>
+                        <div>
+                          <Label className="mb-1 block text-xs">Phone *</Label>
+                          <Input className="h-8 text-sm" placeholder="(555) 123-4567" value={newMember.phone} onChange={e => setNewMember(p => ({ ...p, phone: e.target.value }))} />
+                        </div>
+                        <div>
+                          <Label className="mb-1 block text-xs">Display Rank</Label>
+                          <Input className="h-8 text-sm" type="number" min={1} placeholder="1" value={newMember.rank} onChange={e => setNewMember(p => ({ ...p, rank: Number(e.target.value) }))} />
+                        </div>
+                        <div>
+                          <Label className="mb-1 block text-xs">Description (optional)</Label>
+                          <Input className="h-8 text-sm" placeholder="e.g. Serving since 2022" value={newMember.description} onChange={e => setNewMember(p => ({ ...p, description: e.target.value }))} />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="bg-violet-600 hover:bg-violet-700 text-white" onClick={addBoardMember} disabled={!newMember.name.trim() || !newMember.position.trim() || !newMember.email.trim() || !newMember.phone.trim()}>
+                          <Check className="h-3.5 w-3.5 mr-1" /> Add Member
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setShowAddMember(false)}>Cancel</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowAddMember(true)}
+                      className="w-full mt-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-muted-foreground/25 text-sm text-muted-foreground hover:border-violet-400 hover:text-violet-600 hover:bg-violet-50/50 transition-all"
+                    >
+                      <Plus className="h-4 w-4" /> Add Board Member
+                    </button>
+                  )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Post Announcement */}
+              <AccordionItem value="announcement" className="border-0">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                      <Bell className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-sm">Post Announcement</p>
+                      <p className="text-xs text-muted-foreground font-normal">Notify all residents with a community-wide message</p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6 pt-0">
+                  <div className="space-y-4">
+                  <div>
+                    <Label className="mb-1.5 block text-sm font-medium">Title</Label>
+                    <Input
+                      value={announcementTitle}
+                      onChange={e => setAnnouncementTitle(e.target.value)}
+                      placeholder="e.g. Pool Maintenance This Weekend"
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1.5 block text-sm font-medium">Message</Label>
+                    <textarea
+                      className="w-full min-h-[110px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+                      value={announcementMessage}
+                      onChange={e => setAnnouncementMessage(e.target.value)}
+                      placeholder="Write your announcement here..."
+                    />
+                  </div>
+                  <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-red-200 bg-red-50/50 hover:bg-red-50 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={announcementUrgent}
+                      onChange={e => setAnnouncementUrgent(e.target.checked)}
+                      className="h-4 w-4 rounded border-red-300 accent-red-600"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-red-700">Mark as urgent</p>
+                      <p className="text-xs text-red-500">Residents will be alerted immediately</p>
+                    </div>
+                  </label>
+                  <Button
+                    className="bg-[#004080] hover:bg-[#003060] text-white w-full"
+                    disabled={!announcementTitle.trim() || !announcementMessage.trim()}
+                    onClick={() => {
+                      createAnnouncement({
+                        communityId: mockCommunity.id,
+                        title: announcementTitle.trim(),
+                        message: announcementMessage.trim(),
+                        urgent: announcementUrgent,
+                        authorName: cityName,
+                      });
+                      setAnnouncementTitle('');
+                      setAnnouncementMessage('');
+                      setAnnouncementUrgent(false);
+                      toast.success('Announcement posted to all residents');
+                    }}
+                  >
+                    <Bell className="h-4 w-4 mr-2" />
+                    Post Announcement
+                  </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Recent Announcements */}
+              <AccordionItem value="recent" className="border-0">
+                <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/30 rounded-b-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                      <Calendar className="h-4 w-4 text-slate-600" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-sm">Recent Announcements</p>
+                      <p className="text-xs text-muted-foreground font-normal">{mockCommunity.announcements.length} posted · history of community messages</p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-6 pb-6 pt-0">
+                  {mockCommunity.announcements.length > 0 ? (
+                    <div className="space-y-3">
+                      {[...mockCommunity.announcements].reverse().map(ann => (
+                        <div key={ann.id} className={`p-4 rounded-xl border-2 ${ann.urgent ? 'border-red-200 bg-red-50' : 'border-gray-100 bg-gray-50'}`}>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-sm">{ann.title}</p>
+                              <p className="text-sm text-muted-foreground mt-0.5 leading-snug">{ann.message}</p>
+                            </div>
+                            {ann.urgent && <Badge className="bg-red-500 text-white border-0 shrink-0 text-xs">Urgent</Badge>}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">{new Date(ann.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-10 text-center">
+                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                        <Bell className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">No announcements yet.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Expand "Post Announcement" above to send one.</p>
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
